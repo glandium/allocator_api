@@ -1,0 +1,14 @@
+[package]
+name = "allocator_api"
+version = "0.0.1"
+authors = ["The Rust Project Developers", "Mike Hommey <mh@glandium.org>"]
+license = "Apache-2.0/MIT"
+description = """
+A copy of the unstable allocator_api
+(https://github.com/rust-lang/rust/issues/32838)
+
+Usable with stable rust, but requires 1.25.
+"""
+repository = "https://github.com/glandium/allocator_api"
+documentation = "https://doc.rust-lang.org/alloc/allocator/index.html"
+keywords = ["no_std", "allocator"]
