@@ -282,10 +282,9 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(alloc)]
-    /// # extern crate alloc;
+    /// # extern crate allocator_api;
     /// # use std::ptr;
-    /// # use alloc::raw_vec::RawVec;
+    /// # use allocator_api::RawVec;
     /// struct MyVec<T> {
     ///     buf: RawVec<T>,
     ///     len: usize,
@@ -510,10 +509,9 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(alloc)]
-    /// # extern crate alloc;
+    /// # extern crate allocator_api;
     /// # use std::ptr;
-    /// # use alloc::raw_vec::RawVec;
+    /// # use allocator_api::RawVec;
     /// struct MyVec<T> {
     ///     buf: RawVec<T>,
     ///     len: usize,
