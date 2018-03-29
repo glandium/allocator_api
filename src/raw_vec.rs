@@ -282,15 +282,16 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # extern crate allocator_api;
+    /// extern crate allocator_api;
+    /// use allocator_api::{Alloc, RawVec};
     /// # use std::ptr;
-    /// # use allocator_api::RawVec;
-    /// struct MyVec<T> {
-    ///     buf: RawVec<T>,
+    /// # include!("dummy.rs");
+    /// struct MyVec<T, A: Alloc> {
+    ///     buf: RawVec<T, A>,
     ///     len: usize,
     /// }
     ///
-    /// impl<T> MyVec<T> {
+    /// impl<T, A: Alloc> MyVec<T, A> {
     ///     pub fn push(&mut self, elem: T) {
     ///         if self.len == self.buf.cap() { self.buf.double(); }
     ///         // double would have aborted or panicked if the len exceeded
@@ -302,7 +303,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     ///     }
     /// }
     /// # fn main() {
-    /// #   let mut vec = MyVec { buf: RawVec::new(), len: 0 };
+    /// #   let mut vec = MyVec { buf: RawVec::new_in(MyHeap), len: 0 };
     /// #   vec.push(1);
     /// # }
     /// ```
@@ -509,15 +510,16 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # extern crate allocator_api;
+    /// extern crate allocator_api;
+    /// use allocator_api::{Alloc, RawVec};
     /// # use std::ptr;
-    /// # use allocator_api::RawVec;
-    /// struct MyVec<T> {
-    ///     buf: RawVec<T>,
+    /// # include!("dummy.rs");
+    /// struct MyVec<T, A: Alloc> {
+    ///     buf: RawVec<T, A>,
     ///     len: usize,
     /// }
     ///
-    /// impl<T: Clone> MyVec<T> {
+    /// impl<T: Clone, A: Alloc> MyVec<T, A> {
     ///     pub fn push_all(&mut self, elems: &[T]) {
     ///         self.buf.reserve(self.len, elems.len());
     ///         // reserve would have aborted or panicked if the len exceeded
@@ -531,7 +533,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     ///     }
     /// }
     /// # fn main() {
-    /// #   let mut vector = MyVec { buf: RawVec::new(), len: 0 };
+    /// #   let mut vector = MyVec { buf: RawVec::new_in(MyHeap), len: 0 };
     /// #   vector.push_all(&[1, 3, 5, 7, 9]);
     /// # }
     /// ```
