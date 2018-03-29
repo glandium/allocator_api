@@ -7,11 +7,15 @@ extern crate alloc;
 extern crate std;
 
 pub mod allocator;
+#[cfg(feature = "box")]
+pub mod boxed;
 #[cfg(feature = "heap")]
 pub mod heap;
 pub mod raw_vec;
 
 pub use allocator::*;
+#[cfg(feature = "box")]
+pub use boxed::*;
 #[cfg(feature = "heap")]
 pub use heap::*;
 pub use raw_vec::*;

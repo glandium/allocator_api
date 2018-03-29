@@ -13,13 +13,15 @@ use core::marker::PhantomData;
 use core::mem;
 use core::ops::Drop;
 use core::ptr::{self, NonNull};
-#[cfg(feature = "heap")]
+#[cfg(any(feature = "heap", feature = "box"))]
 use core::slice;
 use super::allocator::{Alloc, Layout};
 #[cfg(feature = "heap")]
 use heap::Heap;
-#[cfg(feature = "heap")]
+#[cfg(all(feature = "heap", not(feature = "box")))]
 use alloc::boxed::Box;
+#[cfg(feature = "box")]
+use boxed::Box;
 use super::allocator::CollectionAllocErr;
 use super::allocator::CollectionAllocErr::*;
 
@@ -205,10 +207,24 @@ impl<T> RawVec<T, Heap> {
         }
     }
 
+    #[cfg(not(feature = "box"))]
     /// Converts a `Box<[T]>` into a `RawVec<T>`.
     pub fn from_box(mut slice: Box<[T]>) -> Self {
         unsafe {
             let result = RawVec::from_raw_parts(slice.as_mut_ptr(), slice.len());
+            mem::forget(slice);
+            result
+        }
+    }
+}
+
+#[cfg(feature = "box")]
+impl<T, A: Alloc> RawVec<T, A> {
+    /// Converts a `Box<[T], A>` into a `RawVec<T, A>`.
+    pub fn from_box(mut slice: Box<[T], A>) -> Self {
+        unsafe {
+            let a = ptr::read(&slice.a);
+            let result = RawVec::from_raw_parts_in(slice.as_mut_ptr(), slice.len(), a);
             mem::forget(slice);
             result
         }
@@ -699,7 +715,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
-#[cfg(feature = "heap")]
+#[cfg(all(feature = "heap", not(feature = "box")))]
 impl<T> RawVec<T, Heap> {
     /// Converts the entire buffer into `Box<[T]>`.
     ///
@@ -713,6 +729,26 @@ impl<T> RawVec<T, Heap> {
         // NOTE: not calling `cap()` here, actually using the real `cap` field!
         let slice = slice::from_raw_parts_mut(self.ptr(), self.cap);
         let output: Box<[T]> = Box::from_raw(slice);
+        mem::forget(self);
+        output
+    }
+}
+
+#[cfg(feature = "box")]
+impl<T, A: Alloc> RawVec<T, A> {
+    /// Converts the entire buffer into `Box<[T], A>`.
+    ///
+    /// While it is not *strictly* Undefined Behavior to call
+    /// this procedure while some of the RawVec is uninitialized,
+    /// it certainly makes it trivial to trigger it.
+    ///
+    /// Note that this will correctly reconstitute any `cap` changes
+    /// that may have been performed. (see description of type for details)
+    pub unsafe fn into_box(self) -> Box<[T], A> {
+        // NOTE: not calling `cap()` here, actually using the real `cap` field!
+        let slice = slice::from_raw_parts_mut(self.ptr(), self.cap);
+        let a = ptr::read(&self.a);
+        let output: Box<[T], A> = Box::from_raw_in(slice, a);
         mem::forget(self);
         output
     }

@@ -15,3 +15,9 @@ keywords = ["no_std", "allocator"]
 
 [features]
 heap = []
+box = []
+i128 = []
+fused = []
+
+[build-dependencies]
+rustc_version = "0.2"
