@@ -3,8 +3,6 @@
 mod dummy {
 
     use allocator_api::{Alloc, AllocErr, Layout};
-    use std::cell::Cell;
-    use std::ptr;
 
     pub struct MyHeap;
 
