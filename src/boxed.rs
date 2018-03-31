@@ -23,7 +23,7 @@ use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 use allocator::{Alloc, Layout};
 #[cfg(feature = "heap")]
-use heap::Heap;
+use alloc::heap::Heap;
 use raw_vec::RawVec;
 
 macro_rules! box_ {

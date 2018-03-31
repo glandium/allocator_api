@@ -17,7 +17,7 @@ use core::ptr::{self, NonNull};
 use core::slice;
 use super::allocator::{Alloc, Layout};
 #[cfg(feature = "heap")]
-use heap::Heap;
+use alloc::heap::Heap;
 #[cfg(all(feature = "heap", not(feature = "box")))]
 use alloc::boxed::Box;
 #[cfg(feature = "box")]

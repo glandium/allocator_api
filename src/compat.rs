@@ -5,30 +5,25 @@
 // except according to those terms.
 
 mod their {
-    pub use alloc::heap::Heap;
-    pub use alloc::allocator::{AllocErr, CannotReallocInPlace, Excess, Layout};
+    pub use alloc::allocator::{Alloc, AllocErr, CannotReallocInPlace, Excess, Layout};
 }
-use alloc::allocator::Alloc;
 use super::allocator as our;
 
-#[derive(Copy, Clone, Default, Debug)]
-pub struct Heap;
-
-unsafe impl our::Alloc for Heap {
+unsafe impl<A: their::Alloc> our::Alloc for A {
     #[inline]
     unsafe fn alloc(&mut self, layout: our::Layout) -> Result<*mut u8, our::AllocErr> {
-        Ok(their::Heap.alloc(layout.into())?)
+        Ok(their::Alloc::alloc(self, layout.into())?)
     }
 
     #[inline]
     #[cold]
     fn oom(&mut self, err: our::AllocErr) -> ! {
-        their::Heap.oom(err.into())
+        their::Alloc::oom(self, err.into())
     }
 
     #[inline]
     unsafe fn dealloc(&mut self, ptr: *mut u8, layout: our::Layout) {
-        their::Heap.dealloc(ptr, layout.into())
+        their::Alloc::dealloc(self, ptr, layout.into())
     }
 
     #[inline]
@@ -36,7 +31,7 @@ unsafe impl our::Alloc for Heap {
         let layout = unsafe {
             their::Layout::from_size_align_unchecked(layout.size(), layout.align())
         };
-        their::Heap.usable_size(&layout)
+        their::Alloc::usable_size(self, &layout)
     }
 
     #[inline]
@@ -46,17 +41,17 @@ unsafe impl our::Alloc for Heap {
                       new_layout: our::Layout)
                       -> Result<*mut u8, our::AllocErr>
     {
-        Ok(their::Heap.realloc(ptr, layout.into(), new_layout.into())?)
+        Ok(their::Alloc::realloc(self, ptr, layout.into(), new_layout.into())?)
     }
 
     #[inline]
     unsafe fn alloc_zeroed(&mut self, layout: our::Layout) -> Result<*mut u8, our::AllocErr> {
-        Ok(their::Heap.alloc_zeroed(layout.into())?)
+        Ok(their::Alloc::alloc_zeroed(self, layout.into())?)
     }
 
     #[inline]
     unsafe fn alloc_excess(&mut self, layout: our::Layout) -> Result<our::Excess, our::AllocErr> {
-        Ok(their::Heap.alloc_excess(layout.into())?.into())
+        Ok(their::Alloc::alloc_excess(self, layout.into())?.into())
     }
 
     #[inline]
@@ -64,7 +59,7 @@ unsafe impl our::Alloc for Heap {
                              ptr: *mut u8,
                              layout: our::Layout,
                              new_layout: our::Layout) -> Result<our::Excess, our::AllocErr> {
-        Ok(their::Heap.realloc_excess(ptr, layout.into(), new_layout.into())?.into())
+        Ok(their::Alloc::realloc_excess(self, ptr, layout.into(), new_layout.into())?.into())
     }
 
     #[inline]
@@ -74,7 +69,7 @@ unsafe impl our::Alloc for Heap {
                             new_layout: our::Layout)
                             -> Result<(), our::CannotReallocInPlace>
     {
-        Ok(their::Heap.grow_in_place(ptr, layout.into(), new_layout.into())?)
+        Ok(their::Alloc::grow_in_place(self, ptr, layout.into(), new_layout.into())?)
     }
 
     #[inline]
@@ -83,7 +78,7 @@ unsafe impl our::Alloc for Heap {
                               layout: our::Layout,
                               new_layout: our::Layout) -> Result<(), our::CannotReallocInPlace>
     {
-        Ok(their::Heap.shrink_in_place(ptr, layout.into(), new_layout.into())?)
+        Ok(their::Alloc::shrink_in_place(self, ptr, layout.into(), new_layout.into())?)
     }
 }
 

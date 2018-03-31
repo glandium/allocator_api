@@ -1,21 +1,19 @@
 #![no_std]
-#![cfg_attr(feature = "heap", feature(alloc, allocator_api))]
+#![cfg_attr(feature = "nightly_compat", feature(alloc, allocator_api))]
 
-#[cfg(feature = "heap")]
+#[cfg(feature = "nightly_compat")]
 extern crate alloc;
-#[cfg(feature = "heap")]
+#[cfg(feature = "nightly_compat")]
 extern crate std;
 
 pub mod allocator;
 #[cfg(feature = "box")]
 pub mod boxed;
-#[cfg(feature = "heap")]
-pub mod heap;
+#[cfg(feature = "nightly_compat")]
+pub mod compat;
 pub mod raw_vec;
 
 pub use allocator::*;
 #[cfg(feature = "box")]
 pub use boxed::*;
-#[cfg(feature = "heap")]
-pub use heap::*;
 pub use raw_vec::*;
