@@ -28,10 +28,7 @@ unsafe impl<A: their::Alloc> our::Alloc for A {
 
     #[inline]
     fn usable_size(&self, layout: &our::Layout) -> (usize, usize) {
-        let layout = unsafe {
-            their::Layout::from_size_align_unchecked(layout.size(), layout.align())
-        };
-        their::Alloc::usable_size(self, &layout)
+        their::Alloc::usable_size(self, &layout.clone().into())
     }
 
     #[inline]
