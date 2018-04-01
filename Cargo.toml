@@ -14,11 +14,11 @@ documentation = "https://doc.rust-lang.org/alloc/allocator/index.html"
 keywords = ["no_std", "allocator"]
 
 [features]
-heap = ["nightly_compat"]
+heap = ["unstable-rust"]
 box = []
 i128 = []
 fused = []
-nightly_compat = []
+unstable-rust = []
 
 [build-dependencies]
 rustc_version = "0.2"
