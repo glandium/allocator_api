@@ -8,7 +8,7 @@ Usable with stable rust, but requires 1.25.
 ## Differences with nightly rust
 
 The code was copied from src/liballoc as of
-92bfcd2b192e59d12d64acf6f46c1897a3273b3e, with #[stable] and #[unstable]
+8dd24c8ed4ac3e48068408fa21d491d7ffe45295, with #[stable] and #[unstable]
 annotations removed.
 
 In the allocator module, the `oom` function calls `panic!` instead of
