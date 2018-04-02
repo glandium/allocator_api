@@ -23,7 +23,7 @@ use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 use allocator::{Alloc, Layout};
 #[cfg(feature = "heap")]
-use alloc::heap::Heap;
+use heap::Heap;
 use raw_vec::RawVec;
 
 macro_rules! box_ {
@@ -81,7 +81,9 @@ impl<T> Box<T> {
     /// ```
     /// extern crate allocator_api;
     /// use allocator_api::Box;
+    /// # fn main() {
     /// let five = Box::new(5);
+    /// # }
     /// ```
     #[inline(always)]
     pub fn new(x: T) -> Box<T> {
@@ -111,9 +113,11 @@ impl<T: ?Sized> Box<T> {
     /// ```
     /// extern crate allocator_api;
     /// use allocator_api::Box;
+    /// # fn main() {
     /// let x = Box::new(5);
     /// let ptr = Box::into_raw(x);
     /// let x = unsafe { Box::from_raw(ptr) };
+    /// # }
     /// ```
     #[inline]
     pub unsafe fn from_raw(raw: *mut T) -> Self {

@@ -15,15 +15,15 @@ use core::ops::Drop;
 use core::ptr::{self, NonNull};
 #[cfg(any(feature = "heap", feature = "box"))]
 use core::slice;
-use super::allocator::{Alloc, Layout};
+use allocator::{Alloc, Layout};
 #[cfg(feature = "heap")]
-use alloc::heap::Heap;
+use heap::Heap;
 #[cfg(all(feature = "heap", not(feature = "box")))]
-use alloc::boxed::Box;
+use std::boxed::Box;
 #[cfg(feature = "box")]
 use boxed::Box;
-use super::allocator::CollectionAllocErr;
-use super::allocator::CollectionAllocErr::*;
+use allocator::CollectionAllocErr;
+use allocator::CollectionAllocErr::*;
 
 macro_rules! raw_vec {
     ($($default:ty)*) => {

@@ -28,4 +28,7 @@ Like for `RawVec`, the type relies on `NonNull` rather than `Unique`.
 
 With the `heap` feature enabled, both `Box<T>` and `RawVec<T>` (without an
 explicit allocator generic parameter) work the same as their counterpart
-from libstd.
+from libstd. In stable rust, they don't have the exact behavior wrt out of
+memory handling, they also might not optimize to the best possible code.
+The feature exists more for testing convenience rather than to be used on its
+own merits.
