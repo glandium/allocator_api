@@ -284,19 +284,18 @@ impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
     }
 }
 
-#[cfg(feature = "heap")]
-impl<T: Default> Default for Box<T> {
+impl<T: Default, A: Alloc + Default> Default for Box<T, A> {
     /// Creates a `Box<T>`, with the `Default` value for T.
-    fn default() -> Box<T> {
-        Box::new(Default::default())
+    fn default() -> Box<T, A> {
+        Box::new_in(Default::default(), Default::default())
     }
 }
 
-#[cfg(feature = "heap")]
-impl<T> Default for Box<[T]> {
-    fn default() -> Box<[T]> {
-        let raw = Box::into_raw(Box::<[T; 0]>::new([]));
-        unsafe { Box::from_raw(raw) }
+impl<T, A: Alloc + Default + Clone> Default for Box<[T], A> {
+    fn default() -> Box<[T], A> {
+        let a: A = Default::default();
+        let raw = Box::into_raw(Box::<[T; 0], A>::new_in([], a.clone()));
+        unsafe { Box::from_raw_in(raw, a) }
     }
 }
 
@@ -437,17 +436,16 @@ impl<T: ?Sized + Hasher, A: Alloc> Hasher for Box<T, A> {
     }
 }
 
-#[cfg(feature = "heap")]
-impl<T> From<T> for Box<T> {
+impl<T, A: Alloc + Default> From<T> for Box<T, A> {
     fn from(t: T) -> Self {
-        Box::new(t)
+        Box::new_in(t, Default::default())
     }
 }
 
-#[cfg(feature = "heap")]
-impl<'a, T: Copy> From<&'a [T]> for Box<[T]> {
-    fn from(slice: &'a [T]) -> Box<[T]> {
-        let mut boxed = unsafe { RawVec::with_capacity(slice.len()).into_box() };
+impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
+    fn from(slice: &'a [T]) -> Box<[T], A> {
+        let a = Default::default();
+        let mut boxed = unsafe { RawVec::with_capacity_in(slice.len(), a).into_box() };
         boxed.copy_from_slice(slice);
         boxed
     }
