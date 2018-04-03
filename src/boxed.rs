@@ -22,26 +22,14 @@ use core::mem;
 use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 use allocator::{Alloc, Layout};
-#[cfg(feature = "heap")]
-use heap::Heap;
 use raw_vec::RawVec;
 
-macro_rules! box_ {
-    ($($default:ty)*) => {
-        /// A pointer type for heap allocation.
-        pub struct Box<T: ?Sized, A: Alloc $(= $default)*> {
-            ptr: NonNull<T>,
-            marker: PhantomData<T>,
-            pub(crate) a: A,
-        }
-    };
+/// A pointer type for heap allocation.
+pub struct Box<T: ?Sized, A: Alloc> {
+    ptr: NonNull<T>,
+    marker: PhantomData<T>,
+    pub(crate) a: A,
 }
-
-#[cfg(feature = "heap")]
-box_!(Heap);
-
-#[cfg(not(feature = "heap"))]
-box_!();
 
 impl<T, A: Alloc> Box<T, A> {
     /// Allocates memory in the given allocator and then places `x` into it.
@@ -66,65 +54,6 @@ impl<T, A: Alloc> Box<T, A> {
             ptr: ptr,
             marker: PhantomData,
             a: a,
-        }
-    }
-}
-
-#[cfg(feature = "heap")]
-impl<T> Box<T> {
-    /// Allocates memory on the heap and then places `x` into it.
-    ///
-    /// This doesn't actually allocate if `T` is zero-sized.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// extern crate allocator_api;
-    /// use allocator_api::Box;
-    /// # fn main() {
-    /// let five = Box::new(5);
-    /// # }
-    /// ```
-    #[inline(always)]
-    pub fn new(x: T) -> Box<T> {
-        Box::new_in(x, Heap)
-    }
-}
-
-#[cfg(feature = "heap")]
-impl<T: ?Sized> Box<T> {
-    /// Constructs a box from a raw pointer.
-    ///
-    /// After calling this function, the raw pointer is owned by the
-    /// resulting `Box`. Specifically, the `Box` destructor will call
-    /// the destructor of `T` and free the allocated memory. Since the
-    /// way `Box` allocates and releases memory is unspecified, the
-    /// only valid pointer to pass to this function is the one taken
-    /// from another `Box` via the [`Box::into_raw`] function.
-    ///
-    /// This function is unsafe because improper use may lead to
-    /// memory problems. For example, a double-free may occur if the
-    /// function is called twice on the same raw pointer.
-    ///
-    /// [`Box::into_raw`]: struct.Box.html#method.into_raw
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// extern crate allocator_api;
-    /// use allocator_api::Box;
-    /// # fn main() {
-    /// let x = Box::new(5);
-    /// let ptr = Box::into_raw(x);
-    /// let x = unsafe { Box::from_raw(ptr) };
-    /// # }
-    /// ```
-    #[inline]
-    pub unsafe fn from_raw(raw: *mut T) -> Self {
-        Box {
-            ptr: NonNull::new_unchecked(raw),
-            marker: PhantomData,
-            a: Heap,
         }
     }
 }

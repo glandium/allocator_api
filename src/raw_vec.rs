@@ -25,50 +25,40 @@ use boxed::Box;
 use allocator::CollectionAllocErr;
 use allocator::CollectionAllocErr::*;
 
-macro_rules! raw_vec {
-    ($($default:ty)*) => {
-        /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
-        /// a buffer of memory on the heap without having to worry about all the corner cases
-        /// involved. This type is excellent for building your own data structures like Vec and VecDeque.
-        /// In particular:
-        ///
-        /// * Produces NonNull::dangling() on zero-sized types
-        /// * Produces NonNull::dangling() on zero-length allocations
-        /// * Catches all overflows in capacity computations (promotes them to "capacity overflow" panics)
-        /// * Guards against 32-bit systems allocating more than isize::MAX bytes
-        /// * Guards against overflowing your length
-        /// * Aborts on OOM
-        /// * Avoids freeing NonNull::dangling()
-        /// * Contains a ptr::NonNull and thus endows the user with all related benefits
-        ///
-        /// This type does not in anyway inspect the memory that it manages. When dropped it *will*
-        /// free its memory, but it *won't* try to Drop its contents. It is up to the user of RawVec
-        /// to handle the actual things *stored* inside of a RawVec.
-        ///
-        /// Note that a RawVec always forces its capacity to be usize::MAX for zero-sized types.
-        /// This enables you to use capacity growing logic catch the overflows in your length
-        /// that might occur with zero-sized types.
-        ///
-        /// However this means that you need to be careful when roundtripping this type
-        /// with a `Box<[T]>`: `cap()` won't yield the len. However `with_capacity`,
-        /// `shrink_to_fit`, and `from_box` will actually set RawVec's private capacity
-        /// field. This allows zero-sized types to not be special-cased by consumers of
-        /// this type.
-        #[allow(missing_debug_implementations)]
-        pub struct RawVec<T, A: Alloc $(= $default)*> {
-            ptr: NonNull<T>,
-            marker: PhantomData<T>,
-            cap: usize,
-            a: A,
-        }
-    };
+/// A low-level utility for more ergonomically allocating, reallocating, and deallocating
+/// a buffer of memory on the heap without having to worry about all the corner cases
+/// involved. This type is excellent for building your own data structures like Vec and VecDeque.
+/// In particular:
+///
+/// * Produces NonNull::dangling() on zero-sized types
+/// * Produces NonNull::dangling() on zero-length allocations
+/// * Catches all overflows in capacity computations (promotes them to "capacity overflow" panics)
+/// * Guards against 32-bit systems allocating more than isize::MAX bytes
+/// * Guards against overflowing your length
+/// * Aborts on OOM
+/// * Avoids freeing NonNull::dangling()
+/// * Contains a ptr::NonNull and thus endows the user with all related benefits
+///
+/// This type does not in anyway inspect the memory that it manages. When dropped it *will*
+/// free its memory, but it *won't* try to Drop its contents. It is up to the user of RawVec
+/// to handle the actual things *stored* inside of a RawVec.
+///
+/// Note that a RawVec always forces its capacity to be usize::MAX for zero-sized types.
+/// This enables you to use capacity growing logic catch the overflows in your length
+/// that might occur with zero-sized types.
+///
+/// However this means that you need to be careful when roundtripping this type
+/// with a `Box<[T]>`: `cap()` won't yield the len. However `with_capacity`,
+/// `shrink_to_fit`, and `from_box` will actually set RawVec's private capacity
+/// field. This allows zero-sized types to not be special-cased by consumers of
+/// this type.
+#[allow(missing_debug_implementations)]
+pub struct RawVec<T, A: Alloc> {
+    ptr: NonNull<T>,
+    marker: PhantomData<T>,
+    cap: usize,
+    a: A,
 }
-
-#[cfg(feature = "heap")]
-raw_vec!(Heap);
-
-#[cfg(not(feature = "heap"))]
-raw_vec!();
 
 impl<T, A: Alloc> RawVec<T, A> {
     /// Like `new` but parameterized over the choice of allocator for
@@ -133,44 +123,6 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
-#[cfg(feature = "heap")]
-impl<T> RawVec<T, Heap> {
-    /// Creates the biggest possible RawVec (on the system heap)
-    /// without allocating. If T has positive size, then this makes a
-    /// RawVec with capacity 0. If T has 0 size, then it makes a
-    /// RawVec with capacity `usize::MAX`. Useful for implementing
-    /// delayed allocation.
-    pub fn new() -> Self {
-        Self::new_in(Heap)
-    }
-
-    /// Creates a RawVec (on the system heap) with exactly the
-    /// capacity and alignment requirements for a `[T; cap]`. This is
-    /// equivalent to calling RawVec::new when `cap` is 0 or T is
-    /// zero-sized. Note that if `T` is zero-sized this means you will
-    /// *not* get a RawVec with the requested capacity!
-    ///
-    /// # Panics
-    ///
-    /// * Panics if the requested capacity exceeds `usize::MAX` bytes.
-    /// * Panics on 32-bit platforms if the requested capacity exceeds
-    ///   `isize::MAX` bytes.
-    ///
-    /// # Aborts
-    ///
-    /// Aborts on OOM
-    #[inline]
-    pub fn with_capacity(cap: usize) -> Self {
-        RawVec::allocate_in(cap, false, Heap)
-    }
-
-    /// Like `with_capacity` but guarantees the buffer is zeroed.
-    #[inline]
-    pub fn with_capacity_zeroed(cap: usize) -> Self {
-        RawVec::allocate_in(cap, true, Heap)
-    }
-}
-
 impl<T, A: Alloc> RawVec<T, A> {
     /// Reconstitutes a RawVec from a pointer, capacity, and allocator.
     ///
@@ -185,35 +137,6 @@ impl<T, A: Alloc> RawVec<T, A> {
             marker: PhantomData,
             cap,
             a,
-        }
-    }
-}
-
-#[cfg(feature = "heap")]
-impl<T> RawVec<T, Heap> {
-    /// Reconstitutes a RawVec from a pointer, capacity.
-    ///
-    /// # Undefined Behavior
-    ///
-    /// The ptr must be allocated (on the system heap), and with the given capacity. The
-    /// capacity cannot exceed `isize::MAX` (only a concern on 32-bit systems).
-    /// If the ptr and capacity come from a RawVec, then this is guaranteed.
-    pub unsafe fn from_raw_parts(ptr: *mut T, cap: usize) -> Self {
-        RawVec {
-            ptr: NonNull::new_unchecked(ptr),
-            marker: PhantomData,
-            cap,
-            a: Heap,
-        }
-    }
-
-    #[cfg(not(feature = "box"))]
-    /// Converts a `Box<[T]>` into a `RawVec<T>`.
-    pub fn from_box(mut slice: Box<[T]>) -> Self {
-        unsafe {
-            let result = RawVec::from_raw_parts(slice.as_mut_ptr(), slice.len());
-            mem::forget(slice);
-            result
         }
     }
 }
@@ -712,25 +635,6 @@ impl<T, A: Alloc> RawVec<T, A> {
             }
             self.cap = amount;
         }
-    }
-}
-
-#[cfg(all(feature = "heap", not(feature = "box")))]
-impl<T> RawVec<T, Heap> {
-    /// Converts the entire buffer into `Box<[T]>`.
-    ///
-    /// While it is not *strictly* Undefined Behavior to call
-    /// this procedure while some of the RawVec is uninitialized,
-    /// it certainly makes it trivial to trigger it.
-    ///
-    /// Note that this will correctly reconstitute any `cap` changes
-    /// that may have been performed. (see description of type for details)
-    pub unsafe fn into_box(self) -> Box<[T]> {
-        // NOTE: not calling `cap()` here, actually using the real `cap` field!
-        let slice = slice::from_raw_parts_mut(self.ptr(), self.cap);
-        let output: Box<[T]> = Box::from_raw(slice);
-        mem::forget(self);
-        output
     }
 }
 

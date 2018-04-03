@@ -14,14 +14,9 @@ documentation = "https://doc.rust-lang.org/alloc/allocator/index.html"
 keywords = ["no_std", "allocator"]
 
 [features]
-heap = ["static_assertions"]
 box = []
 i128 = []
 fused = []
-unstable-rust = ["heap"]
-
-[dependencies]
-static_assertions = { version = "0.2", optional = true }
 
 [build-dependencies]
 rustc_version = "0.2"
