@@ -1,8 +1,8 @@
-/// A dummy allocator for doc tests.
+/// A dummy allocator for tests.
 
 mod dummy {
 
-    use allocator_api::{Alloc, AllocErr, Layout};
+    use super::allocator_api::{Alloc, AllocErr, Layout};
 
     pub struct MyHeap;
 
@@ -24,9 +24,9 @@ mod dummy {
             buf.map(|b| b.as_mut_ptr())
                 .ok_or_else(|| AllocErr::Exhausted { request: layout })
         }
-        unsafe fn dealloc(&mut self, ptr: *mut u8, layout: Layout) {}
+        unsafe fn dealloc(&mut self, _ptr: *mut u8, _layout: Layout) {}
     }
 
 }
 
-use dummy::MyHeap;
+use self::dummy::MyHeap;

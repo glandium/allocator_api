@@ -794,9 +794,13 @@ fn alloc_guard(alloc_size: usize) -> Result<(), CollectionAllocErr> {
     }
 }
 
-#[cfg(all(test, feature = "heap"))]
+#[cfg(test)]
 mod tests {
     use super::*;
+    mod allocator_api {
+        pub use ::allocator::*;
+    }
+    include!("dummy.rs");
 
     #[test]
     fn allocator_param() {
@@ -821,13 +825,13 @@ mod tests {
                 if size > self.fuel {
                     return Err(AllocErr::Unsupported { details: "fuel exhausted" });
                 }
-                match Heap.alloc(layout) {
+                match MyHeap.alloc(layout) {
                     ok @ Ok(_) => { self.fuel -= size; ok }
                     err @ Err(_) => err,
                 }
             }
             unsafe fn dealloc(&mut self, ptr: *mut u8, layout: Layout) {
-                Heap.dealloc(ptr, layout)
+                MyHeap.dealloc(ptr, layout)
             }
         }
 
