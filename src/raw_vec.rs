@@ -13,13 +13,9 @@ use core::marker::PhantomData;
 use core::mem;
 use core::ops::Drop;
 use core::ptr::{self, NonNull};
-#[cfg(any(feature = "heap", feature = "box"))]
+#[cfg(feature = "box")]
 use core::slice;
 use allocator::{Alloc, Layout};
-#[cfg(feature = "heap")]
-use heap::Heap;
-#[cfg(all(feature = "heap", not(feature = "box")))]
-use std::boxed::Box;
 #[cfg(feature = "box")]
 use boxed::Box;
 use allocator::CollectionAllocErr;
