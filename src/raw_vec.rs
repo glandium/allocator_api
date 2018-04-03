@@ -13,10 +13,8 @@ use core::marker::PhantomData;
 use core::mem;
 use core::ops::Drop;
 use core::ptr::{self, NonNull};
-#[cfg(feature = "box")]
 use core::slice;
 use allocator::{Alloc, Layout};
-#[cfg(feature = "box")]
 use boxed::Box;
 use allocator::CollectionAllocErr;
 use allocator::CollectionAllocErr::*;
@@ -137,7 +135,6 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
-#[cfg(feature = "box")]
 impl<T, A: Alloc> RawVec<T, A> {
     /// Converts a `Box<[T], A>` into a `RawVec<T, A>`.
     pub fn from_box(mut slice: Box<[T], A>) -> Self {
@@ -634,7 +631,6 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
-#[cfg(feature = "box")]
 impl<T, A: Alloc> RawVec<T, A> {
     /// Converts the entire buffer into `Box<[T], A>`.
     ///
