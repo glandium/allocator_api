@@ -12,9 +12,10 @@ The code was copied from the rust repository as of
 8dd24c8ed4ac3e48068408fa21d491d7ffe45295, with #[stable] and #[unstable]
 annotations removed.
 
-In the allocator module (corresponding to core::heap), the `oom` function calls
-`panic!` instead of `core::intrinsics::abort`, which is not stable. This
-presumes `panic!` doesn't require memory allocation.
+In the allocator module (corresponding to core::heap), the `oom` function
+infinitely loops instead of calling `core::intrinsics::abort`, which is not
+stable. Implementations of the trait should override `oom` to handle the
+situation more appropriately.
 
 In the raw_vec module (corresponding to alloc::raw_vec), `RawVec` uses
 `NonNull` instead of `Unique`.

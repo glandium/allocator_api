@@ -559,7 +559,7 @@ pub unsafe trait Alloc {
     /// invoked method, and let the client decide whether to invoke
     /// this `oom` method in response.
     fn oom(&mut self, _: AllocErr) -> ! {
-        panic!("oom");
+        loop {}
     }
 
     // == ALLOCATOR-SPECIFIC QUANTITIES AND LIMITS ==
