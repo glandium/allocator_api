@@ -12,7 +12,7 @@ The code was copied from the rust repository as of
 c5ffdd787d134c06735a1dc4457515a63bbce5f5, with #[stable] and #[unstable]
 annotations removed.
 
-In the allocator module (corresponding to core::alloc), the `oom` function
+In the alloc module (corresponding to core::alloc), the `oom` function
 infinitely loops instead of calling `core::intrinsics::abort`, which is not
 stable. Implementations of the trait should override `oom` to handle the
 situation more appropriately. The `Opaque` type is an empty enum instead of

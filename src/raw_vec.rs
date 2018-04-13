@@ -14,10 +14,10 @@ use core::mem;
 use core::ops::Drop;
 use core::ptr::{self, NonNull};
 use core::slice;
-use allocator::{Alloc, Layout};
+use alloc::{Alloc, Layout};
 use boxed::Box;
-use allocator::CollectionAllocErr;
-use allocator::CollectionAllocErr::*;
+use alloc::CollectionAllocErr;
+use alloc::CollectionAllocErr::*;
 use ::NonNullCast;
 
 /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
@@ -690,15 +690,15 @@ fn alloc_guard(alloc_size: usize) -> Result<(), CollectionAllocErr> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use allocator::Opaque;
+    use alloc::Opaque;
     mod allocator_api {
-        pub use ::allocator::*;
+        pub use ::alloc::*;
     }
     include!("dummy.rs");
 
     #[test]
     fn allocator_param() {
-        use allocator::{Alloc, AllocErr};
+        use alloc::{Alloc, AllocErr};
 
         // Writing a test of integration between third-party
         // allocators and RawVec is a little tricky because the RawVec

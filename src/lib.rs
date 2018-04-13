@@ -1,10 +1,10 @@
 #![no_std]
 
-pub mod allocator;
+pub mod alloc;
 pub mod boxed;
 pub mod raw_vec;
 
-pub use allocator::*;
+pub use alloc::*;
 pub use boxed::*;
 pub use raw_vec::*;
 
