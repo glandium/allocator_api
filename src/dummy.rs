@@ -1,8 +1,9 @@
 /// A dummy allocator for tests.
 
 mod dummy {
-
-    use super::allocator_api::{Alloc, AllocErr, Layout};
+    extern crate core;
+    use super::allocator_api::{Alloc, AllocErr, Layout, Opaque};
+    use self::core::ptr::NonNull;
 
     pub struct MyHeap;
 
@@ -10,7 +11,7 @@ mod dummy {
     static mut HEAP_CURSOR: usize = 0;
 
     unsafe impl<'a> Alloc for MyHeap {
-        unsafe fn alloc(&mut self, layout: Layout) -> Result<*mut u8, AllocErr> {
+        unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<Opaque>, AllocErr> {
             let ptr = HEAP_BUF.as_ptr() as usize;
             let mut start = HEAP_CURSOR;
             let modulo = (ptr + start) & (layout.align() - 1);
@@ -21,10 +22,10 @@ mod dummy {
             let end = start + layout.size();
             let buf = HEAP_BUF.get_mut(start..end);
             HEAP_CURSOR = end;
-            buf.map(|b| b.as_mut_ptr())
-                .ok_or_else(|| AllocErr::Exhausted { request: layout })
+            buf.map(|b| NonNull::new_unchecked(b as *mut [u8] as *mut u8 as *mut Opaque))
+                .ok_or_else(|| AllocErr)
         }
-        unsafe fn dealloc(&mut self, _ptr: *mut u8, _layout: Layout) {}
+        unsafe fn dealloc(&mut self, _ptr: NonNull<Opaque>, _layout: Layout) {}
     }
 
 }

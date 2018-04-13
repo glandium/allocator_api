@@ -23,6 +23,7 @@ use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 use allocator::{Alloc, Layout};
 use raw_vec::RawVec;
+use ::NonNullCast;
 
 /// A pointer type for heap allocation.
 pub struct Box<T: ?Sized, A: Alloc> {
@@ -44,10 +45,9 @@ impl<T, A: Alloc> Box<T, A> {
             NonNull::dangling()
         } else {
             unsafe {
-                let ptr = a.alloc(layout).unwrap_or_else(|err| { a.oom(err) }) as *mut T;
-                ptr::copy_nonoverlapping(&x, ptr, size);
-                // Wishful thinking: the allocator didn't return null.
-                NonNull::new_unchecked(ptr)
+                let ptr = a.alloc(layout).unwrap_or_else(|_| { a.oom() });
+                ptr::copy_nonoverlapping(&x, ptr.as_ptr() as *mut T, size);
+                ptr.cast_()
             }
         };
         Box {
@@ -207,7 +207,7 @@ impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
             let value = self.ptr.as_ref();
             if mem::size_of_val(value) != 0 {
                 let layout = Layout::for_value(value);
-                self.a.dealloc(self.ptr.as_ptr() as *mut u8, layout);
+                self.a.dealloc(self.ptr.as_opaque_(), layout);
             }
         }
     }
