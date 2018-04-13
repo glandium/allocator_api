@@ -741,14 +741,14 @@ mod tests {
     #[test]
     fn reserve_does_not_overallocate() {
         {
-            let mut v: RawVec<u32> = RawVec::new();
+            let mut v: RawVec<u32, _> = RawVec::new_in(MyHeap);
             // First `reserve` allocates like `reserve_exact`
             v.reserve(0, 9);
             assert_eq!(9, v.cap());
         }
 
         {
-            let mut v: RawVec<u32> = RawVec::new();
+            let mut v: RawVec<u32, _> = RawVec::new_in(MyHeap);
             v.reserve(0, 7);
             assert_eq!(7, v.cap());
             // 97 if more than double of 7, so `reserve` should work
@@ -758,7 +758,7 @@ mod tests {
         }
 
         {
-            let mut v: RawVec<u32> = RawVec::new();
+            let mut v: RawVec<u32, _> = RawVec::new_in(MyHeap);
             v.reserve(0, 12);
             assert_eq!(12, v.cap());
             v.reserve(12, 3);
