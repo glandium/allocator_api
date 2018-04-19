@@ -9,7 +9,7 @@ Usable with stable rust, but requires 1.25.
 ## Differences with nightly rust
 
 The code was copied from the rust repository as of
-c5ffdd787d134c06735a1dc4457515a63bbce5f5, with #[stable] and #[unstable]
+3809bbf47c8557bd149b3e52ceb47434ca8378d5, with #[stable] and #[unstable]
 annotations removed.
 
 In the alloc module (corresponding to core::alloc), the `oom` function

@@ -21,6 +21,7 @@ use core::marker::PhantomData;
 use core::mem;
 use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
+
 use alloc::{Alloc, Layout};
 use raw_vec::RawVec;
 use ::NonNullCast;
