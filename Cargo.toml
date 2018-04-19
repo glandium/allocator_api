@@ -11,6 +11,7 @@ alloc feature.
 Usable with stable rust, but requires 1.25.
 """
 repository = "https://github.com/glandium/allocator_api"
+readme = "README.md"
 keywords = ["no_std", "allocator"]
 
 [features]
