@@ -10,7 +10,6 @@ A copy of the unstable allocator_api
 Usable with stable rust, but requires 1.25.
 """
 repository = "https://github.com/glandium/allocator_api"
-documentation = "https://doc.rust-lang.org/alloc/allocator/index.html"
 keywords = ["no_std", "allocator"]
 
 [features]
