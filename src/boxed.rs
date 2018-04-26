@@ -47,7 +47,7 @@ impl<T, A: Alloc> Box<T, A> {
         } else {
             unsafe {
                 let ptr = a.alloc(layout).unwrap_or_else(|_| { a.oom() });
-                ptr::copy_nonoverlapping(&x, ptr.as_ptr() as *mut T, size);
+                ptr::write(ptr.as_ptr() as *mut T, x);
                 ptr.cast_()
             }
         };
