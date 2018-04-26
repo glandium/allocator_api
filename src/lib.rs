@@ -10,6 +10,18 @@ pub use raw_vec::*;
 
 use core::ptr::NonNull;
 
+/// Casting extensions to the `NonNull` type
+///
+/// This trait adds the [cast] and [as_opaque] methods to the `NonNull` type.
+/// As of writing, [as_opaque] is still unstable, and [cast] only available
+/// starting from rust 1.27.
+///
+/// Due to the conflict in name of the methods and to [PR #48552] not being
+/// merged until rust 1.26, they are suffixed with an underscore.
+///
+/// [cast]: https://doc.rust-lang.org/nightly/core/ptr/struct.NonNull.html#method.cast
+/// [as_opaque]: https://doc.rust-lang.org/nightly/core/ptr/struct.NonNull.html#method.as_opaque
+/// [PR #48552]: https://github.com/rust-lang/rust/pull/48552
 pub trait NonNullCast {
     fn cast_<U>(self) -> NonNull<U>;
     fn as_opaque_(self) -> NonNull<Opaque>;
