@@ -59,6 +59,16 @@ impl<T, A: Alloc> Box<T, A> {
     }
 }
 
+impl<T, A: Alloc + Default> Box<T, A> {
+    /// Allocates memory in the given allocator and then places `x` into it.
+    ///
+    /// This doesn't actually allocate if `T` is zero-sized.
+    #[inline(always)]
+    pub fn new(x: T) -> Box<T, A> {
+        Box::new_in(x, Default::default())
+    }
+}
+
 impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// Constructs a box from a raw pointer in the given allocator.
     ///

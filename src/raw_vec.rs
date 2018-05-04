@@ -119,6 +119,43 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
+impl<T, A: Alloc + Default> RawVec<T, A> {
+    /// Creates the biggest possible RawVec (on the system heap)
+    /// without allocating. If T has positive size, then this makes a
+    /// RawVec with capacity 0. If T has 0 size, then it makes a
+    /// RawVec with capacity `usize::MAX`. Useful for implementing
+    /// delayed allocation.
+    pub fn new() -> Self {
+        Self::new_in(Default::default())
+    }
+
+    /// Creates a RawVec (on the system heap) with exactly the
+    /// capacity and alignment requirements for a `[T; cap]`. This is
+    /// equivalent to calling RawVec::new when `cap` is 0 or T is
+    /// zero-sized. Note that if `T` is zero-sized this means you will
+    /// *not* get a RawVec with the requested capacity!
+    ///
+    /// # Panics
+    ///
+    /// * Panics if the requested capacity exceeds `usize::MAX` bytes.
+    /// * Panics on 32-bit platforms if the requested capacity exceeds
+    ///   `isize::MAX` bytes.
+    ///
+    /// # Aborts
+    ///
+    /// Aborts on OOM
+    #[inline]
+    pub fn with_capacity(cap: usize) -> Self {
+        RawVec::allocate_in(cap, false, Default::default())
+    }
+
+    /// Like `with_capacity` but guarantees the buffer is zeroed.
+    #[inline]
+    pub fn with_capacity_zeroed(cap: usize) -> Self {
+        RawVec::allocate_in(cap, true, Default::default())
+    }
+}
+
 impl<T, A: Alloc> RawVec<T, A> {
     /// Reconstitutes a RawVec from a pointer, capacity, and allocator.
     ///
