@@ -221,10 +221,13 @@ impl<T: Default, A: Alloc + Default> Default for Box<T, A> {
     }
 }
 
-impl<T, A: Alloc + Default + Clone> Default for Box<[T], A> {
+impl<T, A: Alloc + Default> Default for Box<[T], A> {
     fn default() -> Box<[T], A> {
-        let a: A = Default::default();
-        let raw = Box::into_raw(Box::<[T; 0], A>::new_in([], a.clone()));
+        let a = A::default();
+        let b = Box::<[T; 0], A>::new_in([], a);
+        let raw = b.ptr.as_ptr();
+        let a = unsafe { ptr::read(&b.a) };
+        mem::forget(b);
         unsafe { Box::from_raw_in(raw, a) }
     }
 }
