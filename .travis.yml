@@ -1,0 +1,11 @@
+dist: trusty
+language: rust
+matrix:
+  include:
+  - rust: 1.25.0
+  - rust: stable
+  - rust: beta
+  - rust: nightly
+cache: cargo
+script:
+  - cargo test --verbose
