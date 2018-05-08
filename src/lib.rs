@@ -1,4 +1,5 @@
 #![no_std]
+#![cfg_attr(feature = "unstable_name_collision", allow(unstable_name_collision))]
 
 pub mod alloc;
 pub mod boxed;
@@ -24,7 +25,7 @@ use core::ptr::NonNull;
 /// [PR #48552]: https://github.com/rust-lang/rust/pull/48552
 pub trait NonNullCast {
     fn cast_<U>(self) -> NonNull<U>;
-    fn as_opaque_(self) -> NonNull<Opaque>;
+    fn as_opaque(self) -> NonNull<Opaque>;
 }
 
 impl<T: ?Sized> NonNullCast for NonNull<T> {
@@ -34,7 +35,7 @@ impl<T: ?Sized> NonNullCast for NonNull<T> {
         }
     }
 
-    fn as_opaque_(self) -> NonNull<Opaque> {
+    fn as_opaque(self) -> NonNull<Opaque> {
         self.cast_()
     }
 }

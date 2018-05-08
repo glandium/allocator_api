@@ -17,6 +17,7 @@ keywords = ["no_std", "allocator"]
 [features]
 i128 = []
 fused = []
+unstable_name_collision = []
 
 [build-dependencies]
 rustc_version = "0.2"

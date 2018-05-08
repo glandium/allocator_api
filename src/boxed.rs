@@ -218,7 +218,7 @@ impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
             let value = self.ptr.as_ref();
             if mem::size_of_val(value) != 0 {
                 let layout = Layout::for_value(value);
-                self.a.dealloc(self.ptr.as_opaque_(), layout);
+                self.a.dealloc(self.ptr.as_opaque(), layout);
             }
         }
     }
