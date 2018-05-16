@@ -48,7 +48,7 @@ impl<T, A: Alloc> Box<T, A> {
             unsafe {
                 let ptr = a.alloc(layout).unwrap_or_else(|_| { a.oom() });
                 ptr::write(ptr.as_ptr() as *mut T, x);
-                ptr.cast_()
+                ptr.cast()
             }
         };
         Box {

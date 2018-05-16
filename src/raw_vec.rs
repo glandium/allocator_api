@@ -110,7 +110,7 @@ impl<T, A: Alloc> RawVec<T, A> {
             };
 
             RawVec {
-                ptr: ptr.cast_().into(),
+                ptr: ptr.cast().into(),
                 marker: PhantomData,
                 cap,
                 a,
@@ -307,7 +307,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                                                  cur,
                                                  new_size);
                     match ptr_res {
-                        Ok(ptr) => (new_cap, ptr.cast_().into()),
+                        Ok(ptr) => (new_cap, ptr.cast().into()),
                         Err(_) => self.a.oom(),
                     }
                 }
@@ -424,7 +424,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                 None => self.a.alloc(new_layout),
             };
 
-            self.ptr = res?.cast_().into();
+            self.ptr = res?.cast().into();
             self.cap = new_cap;
 
             Ok(())
@@ -533,7 +533,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                 None => self.a.alloc(new_layout),
             };
 
-            self.ptr = res?.cast_().into();
+            self.ptr = res?.cast().into();
             self.cap = new_cap;
 
             Ok(())
@@ -658,7 +658,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                 match self.a.realloc(NonNull::from(self.ptr).as_opaque(),
                                      old_layout,
                                      new_size) {
-                    Ok(p) => self.ptr = p.cast_().into(),
+                    Ok(p) => self.ptr = p.cast().into(),
                     Err(_) => self.a.oom(),
                 }
             }

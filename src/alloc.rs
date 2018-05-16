@@ -963,7 +963,7 @@ pub unsafe trait Alloc {
     {
         let k = Layout::new::<T>();
         if k.size() > 0 {
-            unsafe { self.alloc(k).map(|p| p.cast_()) }
+            unsafe { self.alloc(k).map(|p| p.cast()) }
         } else {
             Err(AllocErr)
         }
@@ -1031,7 +1031,7 @@ pub unsafe trait Alloc {
         match Layout::array::<T>(n) {
             Ok(ref layout) if layout.size() > 0 => {
                 unsafe {
-                    self.alloc(layout.clone()).map(|p| p.cast_())
+                    self.alloc(layout.clone()).map(|p| p.cast())
                 }
             }
             _ => Err(AllocErr),
@@ -1079,7 +1079,7 @@ pub unsafe trait Alloc {
         match (Layout::array::<T>(n_old), Layout::array::<T>(n_new)) {
             (Ok(ref k_old), Ok(ref k_new)) if k_old.size() > 0 && k_new.size() > 0 => {
                 debug_assert!(k_old.align() == k_new.align());
-                self.realloc(ptr.as_opaque(), k_old.clone(), k_new.size()).map(NonNull::cast_)
+                self.realloc(ptr.as_opaque(), k_old.clone(), k_new.size()).map(NonNull::cast)
             }
             _ => {
                 Err(AllocErr)

@@ -4,7 +4,7 @@ This is a copy of the unstable allocator_api
 (https://github.com/rust-lang/rust/issues/32838) and of parts of the unstable
 alloc feature.
 
-Usable with stable rust, but requires 1.25.
+Usable with stable rust, but requires 1.26.
 
 ## Differences with nightly rust
 
