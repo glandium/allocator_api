@@ -1,8 +1,11 @@
 #![no_std]
 #![cfg_attr(feature = "unstable_name_collision", allow(unstable_name_collision))]
 
+#[path = "libcore/alloc.rs"]
 pub mod alloc;
+#[path = "liballoc/boxed.rs"]
 pub mod boxed;
+#[path = "liballoc/raw_vec.rs"]
 pub mod raw_vec;
 
 pub use alloc::*;

@@ -256,7 +256,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// extern crate allocator_api;
     /// use allocator_api::{Alloc, RawVec};
     /// # use std::ptr;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// struct MyVec<T, A: Alloc> {
     ///     buf: RawVec<T, A>,
     ///     len: usize,
@@ -481,7 +481,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// extern crate allocator_api;
     /// use allocator_api::{Alloc, RawVec};
     /// # use std::ptr;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// struct MyVec<T, A: Alloc> {
     ///     buf: RawVec<T, A>,
     ///     len: usize,
@@ -739,7 +739,7 @@ mod tests {
     mod allocator_api {
         pub use ::alloc::*;
     }
-    include!("dummy.rs");
+    include!("../dummy.rs");
 
     #[test]
     fn allocator_param() {

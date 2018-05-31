@@ -86,7 +86,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// ```
     /// extern crate allocator_api;
     /// use allocator_api::Box;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// # fn main() {
     /// let x = Box::new_in(5, MyHeap);
     /// let ptr = Box::into_raw(x);
@@ -122,7 +122,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// ```
     /// extern crate allocator_api;
     /// use allocator_api::Box;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// # fn main() {
     /// let x = Box::new_in(5, MyHeap);
     /// let ptr = Box::into_raw(x);
@@ -158,7 +158,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// ```
     /// extern crate allocator_api;
     /// use allocator_api::Box;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// # fn main() {
     /// let x = Box::new_in(41, MyHeap);
     /// let static_ref: &'static mut usize = Box::leak(x);
@@ -172,7 +172,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// ```
     /// extern crate allocator_api;
     /// # use std::ptr;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// use allocator_api::{Alloc, Box, RawVec};
     /// struct MyVec<T, A: Alloc> {
     ///     buf: RawVec<T, A>,
@@ -250,7 +250,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// ```
     /// extern crate allocator_api;
     /// use allocator_api::Box;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// # fn main() {
     /// let x = Box::new_in(5, MyHeap);
     /// let y = x.clone();
@@ -267,7 +267,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// ```
     /// extern crate allocator_api;
     /// use allocator_api::Box;
-    /// # include!("dummy.rs");
+    /// # include!("../dummy.rs");
     /// # fn main() {
     /// let x = Box::new_in(5, MyHeap);
     /// let mut y = Box::new_in(10, MyHeap);
