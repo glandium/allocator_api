@@ -22,7 +22,7 @@ use core::mem;
 use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 
-use alloc::{Alloc, Layout};
+use alloc::{Alloc, Layout, oom};
 use raw_vec::RawVec;
 use ::NonNullCast;
 
@@ -46,7 +46,7 @@ impl<T, A: Alloc> Box<T, A> {
             NonNull::dangling()
         } else {
             unsafe {
-                let ptr = a.alloc(layout).unwrap_or_else(|_| { a.oom() });
+                let ptr = a.alloc(layout).unwrap_or_else(|_| { oom(layout) });
                 ptr::write(ptr.as_ptr() as *mut T, x);
                 ptr.cast()
             }

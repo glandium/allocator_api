@@ -9,14 +9,15 @@ Usable with stable rust, but requires 1.26.
 ## Differences with nightly rust
 
 The code was copied from the rust repository as of
-1caaafdce7871bc2816c9f42a14fd9262eda4037, with #[stable] and #[unstable]
+a4d899b4a1248f885563e241fa56fe9f69616dc2, with #[stable] and #[unstable]
 annotations removed.
 
-In the alloc module (corresponding to core::alloc), the `oom` function
-infinitely loops instead of calling `core::intrinsics::abort`, which is not
-stable. Implementations of the trait should override `oom` to handle the
-situation more appropriately. The `Opaque` type is an empty enum instead of
-an (not yet stable) extern type.
+In the alloc module (corresponding to parts of both core::alloc and
+std::alloc), the `oom` function infinitely loops instead of calling
+`core::intrinsics::abort`, which is not stable. Users of this crate should use
+`set_oom_hook` to set their own oom function that aborts in the right way (in
+non-no_std cases, one can use `process::abort()`). The `Opaque` type is an
+empty enum instead of an (not yet stable) extern type.
 
 In the raw_vec module (corresponding to alloc::raw_vec), `RawVec` uses
 `NonNull` instead of `Unique`.

@@ -2,11 +2,19 @@
 #![cfg_attr(feature = "unstable_name_collision", allow(unstable_name_collision))]
 
 #[path = "libcore/alloc.rs"]
-pub mod alloc;
+mod core_alloc;
+#[path = "libstd/alloc.rs"]
+mod std_alloc;
 #[path = "liballoc/boxed.rs"]
 pub mod boxed;
 #[path = "liballoc/raw_vec.rs"]
 pub mod raw_vec;
+
+pub mod alloc {
+    pub use core_alloc::*;
+    pub use std_alloc::rust_oom as oom;
+    pub use std_alloc::{set_oom_hook, take_oom_hook};
+}
 
 pub use alloc::*;
 pub use boxed::*;
