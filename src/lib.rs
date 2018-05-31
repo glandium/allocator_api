@@ -1,5 +1,5 @@
 #![no_std]
-#![cfg_attr(feature = "unstable_name_collision", allow(unstable_name_collision))]
+#![allow(unstable_name_collision)]
 
 #[path = "libcore/alloc.rs"]
 mod core_alloc;

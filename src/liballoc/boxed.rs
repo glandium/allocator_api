@@ -15,7 +15,6 @@ use core::borrow;
 use core::cmp::Ordering;
 use core::fmt;
 use core::hash::{Hash, Hasher};
-#[cfg(feature = "fused")]
 use core::iter::FusedIterator;
 use core::marker::PhantomData;
 use core::mem;
@@ -351,7 +350,6 @@ impl<T: ?Sized + Hasher, A: Alloc> Hasher for Box<T, A> {
     fn write_u64(&mut self, i: u64) {
         (**self).write_u64(i)
     }
-    #[cfg(feature = "i128")]
     fn write_u128(&mut self, i: u128) {
         (**self).write_u128(i)
     }
@@ -370,7 +368,6 @@ impl<T: ?Sized + Hasher, A: Alloc> Hasher for Box<T, A> {
     fn write_i64(&mut self, i: i64) {
         (**self).write_i64(i)
     }
-    #[cfg(feature = "i128")]
     fn write_i128(&mut self, i: i128) {
         (**self).write_i128(i)
     }
@@ -454,7 +451,6 @@ impl<I: ExactSizeIterator + ?Sized, A: Alloc> ExactSizeIterator for Box<I, A> {
     }
 }
 
-#[cfg(feature = "fused")]
 impl<I: FusedIterator + ?Sized, A: Alloc> FusedIterator for Box<I, A> {}
 
 impl<T: Clone, A: Alloc + Clone> Clone for Box<[T], A> {
