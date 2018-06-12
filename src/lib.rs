@@ -24,15 +24,12 @@ use core::ptr::NonNull;
 
 /// Casting extensions to the `NonNull` type
 ///
-/// This trait adds the [cast] and [as_opaque] methods to the `NonNull` type.
-/// As of writing, [as_opaque] is still unstable, and [cast] only available
-/// starting from rust 1.27.
+/// This trait adds the [cast] method to the `NonNull` type, which is
+/// only available starting from rust 1.27.
 ///
 /// [cast]: https://doc.rust-lang.org/nightly/core/ptr/struct.NonNull.html#method.cast
-/// [as_opaque]: https://doc.rust-lang.org/nightly/core/ptr/struct.NonNull.html#method.as_opaque
 pub trait NonNullCast {
     fn cast<U>(self) -> NonNull<U>;
-    fn as_opaque(self) -> NonNull<Opaque>;
 }
 
 impl<T: ?Sized> NonNullCast for NonNull<T> {
@@ -40,9 +37,5 @@ impl<T: ?Sized> NonNullCast for NonNull<T> {
         unsafe {
             NonNull::new_unchecked(self.as_ptr() as *mut U)
         }
-    }
-
-    fn as_opaque(self) -> NonNull<Opaque> {
-        self.cast()
     }
 }
