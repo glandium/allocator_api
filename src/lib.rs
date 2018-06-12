@@ -1,5 +1,5 @@
 #![no_std]
-#![allow(unstable_name_collision)]
+#![cfg_attr(not(feature = "nonnull_cast"), allow(unstable_name_collision))]
 
 #[path = "libcore/alloc.rs"]
 mod core_alloc;
@@ -20,6 +20,7 @@ pub use alloc::*;
 pub use boxed::*;
 pub use raw_vec::*;
 
+#[cfg(not(feature = "nonnull_cast"))]
 use core::ptr::NonNull;
 
 /// Casting extensions to the `NonNull` type
@@ -28,10 +29,12 @@ use core::ptr::NonNull;
 /// only available starting from rust 1.27.
 ///
 /// [cast]: https://doc.rust-lang.org/nightly/core/ptr/struct.NonNull.html#method.cast
+#[cfg(not(feature = "nonnull_cast"))]
 pub trait NonNullCast {
     fn cast<U>(self) -> NonNull<U>;
 }
 
+#[cfg(not(feature = "nonnull_cast"))]
 impl<T: ?Sized> NonNullCast for NonNull<T> {
     fn cast<U>(self) -> NonNull<U> {
         unsafe {

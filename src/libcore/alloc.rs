@@ -15,6 +15,7 @@ use core::fmt;
 use core::mem;
 use core::usize;
 use core::ptr::{self, NonNull};
+#[cfg(not(feature = "nonnull_cast"))]
 use ::NonNullCast;
 
 /// Represents the combination of a starting address and

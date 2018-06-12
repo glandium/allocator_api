@@ -23,6 +23,7 @@ use core::ptr::{self, NonNull};
 
 use alloc::{Alloc, Layout, oom};
 use raw_vec::RawVec;
+#[cfg(not(feature = "nonnull_cast"))]
 use ::NonNullCast;
 
 /// A pointer type for heap allocation.

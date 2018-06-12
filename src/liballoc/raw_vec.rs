@@ -19,6 +19,7 @@ use alloc::{Alloc, Layout, oom};
 use alloc::CollectionAllocErr;
 use alloc::CollectionAllocErr::*;
 use boxed::Box;
+#[cfg(not(feature = "nonnull_cast"))]
 use ::NonNullCast;
 
 /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
