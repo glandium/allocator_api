@@ -163,6 +163,7 @@ impl<T, A: Alloc + Default> RawVec<T, A> {
     }
 }
 
+
 impl<T, A: Alloc> RawVec<T, A> {
     /// Reconstitutes a RawVec from a pointer, capacity, and allocator.
     ///
@@ -178,6 +179,20 @@ impl<T, A: Alloc> RawVec<T, A> {
             cap,
             a,
         }
+    }
+}
+
+#[cfg(feature = "global_alloc")]
+impl<T> RawVec<T, Global> {
+    /// Reconstitutes a RawVec from a pointer, capacity.
+    ///
+    /// # Undefined Behavior
+    ///
+    /// The ptr must be allocated (on the system heap), and with the given capacity. The
+    /// capacity cannot exceed `isize::MAX` (only a concern on 32-bit systems).
+    /// If the ptr and capacity come from a RawVec, then this is guaranteed.
+    pub unsafe fn from_raw_parts(ptr: *mut T, cap: usize) -> Self {
+        RawVec::from_raw_parts_in(ptr, cap, Global)
     }
 }
 

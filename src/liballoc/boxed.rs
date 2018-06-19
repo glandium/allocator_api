@@ -73,6 +73,36 @@ impl<T, A: Alloc + Default> Box<T, A> {
     }
 }
 
+#[cfg(feature = "global_alloc")]
+impl<T: ?Sized> Box<T> {
+    /// Constructs a box from a raw pointer.
+    ///
+    /// After calling this function, the raw pointer is owned by the
+    /// resulting `Box`. Specifically, the `Box` destructor will call
+    /// the destructor of `T` and free the allocated memory. Since the
+    /// way `Box` allocates and releases memory is unspecified, the
+    /// only valid pointer to pass to this function is the one taken
+    /// from another `Box` via the [`Box::into_raw`] function.
+    ///
+    /// This function is unsafe because improper use may lead to
+    /// memory problems. For example, a double-free may occur if the
+    /// function is called twice on the same raw pointer.
+    ///
+    /// [`Box::into_raw`]: struct.Box.html#method.into_raw
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let x = Box::new(5);
+    /// let ptr = Box::into_raw(x);
+    /// let x = unsafe { Box::from_raw(ptr) };
+    /// ```
+    #[inline]
+    pub unsafe fn from_raw(raw: *mut T) -> Self {
+        Box::from_raw_in(raw, Global)
+    }
+}
+
 impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// Constructs a box from a raw pointer in the given allocator.
     ///
