@@ -39,6 +39,7 @@ mod global {
     use core_alloc::{AllocErr, Layout};
     use std::alloc::{alloc, alloc_zeroed, dealloc, realloc};
 
+    #[derive(Copy, Clone, Default, Debug)]
     pub struct Global;
 
     impl From<Layout> for ::core::alloc::Layout {
