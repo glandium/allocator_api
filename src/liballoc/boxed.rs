@@ -22,15 +22,19 @@ use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 
 use alloc::{Alloc, Layout, oom};
+#[cfg(feature = "global_alloc")]
+use alloc::Global;
 use raw_vec::RawVec;
 #[cfg(not(feature = "nonnull_cast"))]
 use ::NonNullCast;
 
 /// A pointer type for heap allocation.
-pub struct Box<T: ?Sized, A: Alloc> {
-    ptr: NonNull<T>,
-    marker: PhantomData<T>,
-    pub(crate) a: A,
+global_alloc! {
+    pub struct Box<T: ?Sized, A: Alloc> {
+        ptr: NonNull<T>,
+        marker: PhantomData<T>,
+        pub(crate) a: A,
+    }
 }
 
 impl<T, A: Alloc> Box<T, A> {

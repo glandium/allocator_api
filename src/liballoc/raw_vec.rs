@@ -16,6 +16,8 @@ use core::ptr::{self, NonNull};
 use core::slice;
 
 use alloc::{Alloc, Layout, oom};
+#[cfg(feature = "global_alloc")]
+use alloc::Global;
 use alloc::CollectionAllocErr;
 use alloc::CollectionAllocErr::*;
 use boxed::Box;
@@ -50,11 +52,13 @@ use ::NonNullCast;
 /// field. This allows zero-sized types to not be special-cased by consumers of
 /// this type.
 #[allow(missing_debug_implementations)]
-pub struct RawVec<T, A: Alloc> {
-    ptr: NonNull<T>,
-    marker: PhantomData<T>,
-    cap: usize,
-    a: A,
+global_alloc! {
+    pub struct RawVec<T, A: Alloc> {
+        ptr: NonNull<T>,
+        marker: PhantomData<T>,
+        cap: usize,
+        a: A,
+    }
 }
 
 impl<T, A: Alloc> RawVec<T, A> {

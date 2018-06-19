@@ -14,5 +14,9 @@ repository = "https://github.com/glandium/allocator_api"
 readme = "README.md"
 keywords = ["no_std", "allocator"]
 
+[features]
+default = ["std"]
+std = []
+
 [build-dependencies]
 rustc_version = "0.2"
