@@ -16,7 +16,7 @@ use core::ptr::{self, NonNull};
 use core::slice;
 
 use alloc::{Alloc, Layout, oom};
-#[cfg(feature = "global_alloc")]
+#[cfg(feature = "std")]
 use alloc::Global;
 use alloc::CollectionAllocErr;
 use alloc::CollectionAllocErr::*;
@@ -182,7 +182,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
-#[cfg(feature = "global_alloc")]
+#[cfg(feature = "std")]
 impl<T> RawVec<T, Global> {
     /// Reconstitutes a RawVec from a pointer, capacity.
     ///

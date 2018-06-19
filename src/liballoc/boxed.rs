@@ -22,7 +22,7 @@ use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 
 use alloc::{Alloc, Layout, oom};
-#[cfg(feature = "global_alloc")]
+#[cfg(feature = "std")]
 use alloc::Global;
 use raw_vec::RawVec;
 #[cfg(not(feature = "nonnull_cast"))]
@@ -73,7 +73,7 @@ impl<T, A: Alloc + Default> Box<T, A> {
     }
 }
 
-#[cfg(feature = "global_alloc")]
+#[cfg(feature = "std")]
 impl<T: ?Sized> Box<T> {
     /// Constructs a box from a raw pointer.
     ///
