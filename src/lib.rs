@@ -1,6 +1,6 @@
 #![no_std]
 #![cfg_attr(not(feature = "nonnull_cast"), allow(unstable_name_collision))]
-#![cfg_attr(all(feature = "std", not(feature = "global_alloc")), feature(alloc, allocator_api))]
+#![cfg_attr(all(feature = "std", not(feature = "global_alloc")), feature(allocator_api))]
 
 #[cfg(feature = "std")]
 macro_rules! global_alloc {
@@ -59,13 +59,11 @@ mod global {
     use std::alloc::{alloc, alloc_zeroed, dealloc, realloc};
 
     #[cfg(not(feature = "global_alloc"))]
-    extern crate alloc;
-    #[cfg(not(feature = "global_alloc"))]
     use core::heap::{Alloc, Layout as CoreLayout};
     #[cfg(not(any(feature = "global_alloc", feature = "global_alloc27")))]
-    use self::alloc::heap::Heap;
+    use std::heap::Heap;
     #[cfg(feature = "global_alloc27")]
-    use self::alloc::heap::Global as Heap;
+    use std::heap::Global as Heap;
 
     #[derive(Copy, Clone, Default, Debug)]
     pub struct Global;
