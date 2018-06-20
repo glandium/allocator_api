@@ -126,7 +126,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
-#[cfg(feature = "global_alloc")]
+#[cfg(feature = "std")]
 impl<T> RawVec<T, Global> {
     /// Creates the biggest possible RawVec (on the system heap)
     /// without allocating. If T has positive size, then this makes a
@@ -767,7 +767,7 @@ fn capacity_overflow() -> ! {
     panic!("capacity overflow")
 }
 
-#[cfg(all(test, feature = "global_alloc"))]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
     mod allocator_api {

@@ -76,7 +76,7 @@ impl<T, A: Alloc> Box<T, A> {
     }
 }
 
-#[cfg(feature = "global_alloc")]
+#[cfg(feature = "std")]
 impl<T> Box<T> {
     /// Allocates memory on the heap and then places `x` into it.
     ///
