@@ -41,6 +41,19 @@ impl<T, A: Alloc> Box<T, A> {
     /// Allocates memory in the given allocator and then places `x` into it.
     ///
     /// This doesn't actually allocate if `T` is zero-sized.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[macro_use]
+    /// extern crate allocator_api;
+    /// # test_using_global! {
+    /// use allocator_api::{Box, Global};
+    /// # fn main() {
+    /// let five = Box::new_in(5, Global);
+    /// # }
+    /// # }
+    /// ```
     #[inline(always)]
     pub fn new_in(x: T, a: A) -> Box<T, A> {
         let mut a = a;
@@ -63,13 +76,24 @@ impl<T, A: Alloc> Box<T, A> {
     }
 }
 
-impl<T, A: Alloc + Default> Box<T, A> {
-    /// Allocates memory in the given allocator and then places `x` into it.
+#[cfg(feature = "global_alloc")]
+impl<T> Box<T> {
+    /// Allocates memory on the heap and then places `x` into it.
     ///
     /// This doesn't actually allocate if `T` is zero-sized.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate allocator_api;
+    /// use allocator_api::Box;
+    /// # fn main() {
+    /// let five = Box::new(5);
+    /// # }
+    /// ```
     #[inline(always)]
-    pub fn new(x: T) -> Box<T, A> {
-        Box::new_in(x, Default::default())
+    pub fn new(x: T) -> Box<T> {
+        Box::new_in(x, Global)
     }
 }
 
@@ -93,9 +117,13 @@ impl<T: ?Sized> Box<T> {
     /// # Examples
     ///
     /// ```
+    /// extern crate allocator_api;
+    /// use allocator_api::Box;
+    /// # fn main() {
     /// let x = Box::new(5);
     /// let ptr = Box::into_raw(x);
     /// let x = unsafe { Box::from_raw(ptr) };
+    /// # }
     /// ```
     #[inline]
     pub unsafe fn from_raw(raw: *mut T) -> Self {
@@ -118,13 +146,15 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # Examples
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
-    /// use allocator_api::Box;
-    /// # include!("../dummy.rs");
+    /// # test_using_global! {
+    /// use allocator_api::{Box, Global};
     /// # fn main() {
-    /// let x = Box::new_in(5, MyHeap);
+    /// let x = Box::new_in(5, Global);
     /// let ptr = Box::into_raw(x);
-    /// let x = unsafe { Box::from_raw_in(ptr, MyHeap) };
+    /// let x = unsafe { Box::from_raw_in(ptr, Global) };
+    /// # }
     /// # }
     /// ```
     #[inline]
@@ -154,12 +184,14 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # Examples
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
+    /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # include!("../dummy.rs");
     /// # fn main() {
-    /// let x = Box::new_in(5, MyHeap);
+    /// let x = Box::new(5);
     /// let ptr = Box::into_raw(x);
+    /// # }
     /// # }
     /// ```
     #[inline]
@@ -190,30 +222,33 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// Simple usage:
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
+    /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # include!("../dummy.rs");
-    /// # fn main() {
-    /// let x = Box::new_in(41, MyHeap);
-    /// let static_ref: &'static mut usize = Box::leak(x);
-    /// *static_ref += 1;
-    /// assert_eq!(*static_ref, 42);
+    /// fn main() {
+    ///     let x = Box::new(41);
+    ///     let static_ref: &'static mut usize = Box::leak(x);
+    ///     *static_ref += 1;
+    ///     assert_eq!(*static_ref, 42);
+    /// }
     /// # }
     /// ```
     ///
     /// Unsized data:
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
+    /// # test_using_global! {
     /// # use std::ptr;
-    /// # include!("../dummy.rs");
-    /// use allocator_api::{Alloc, Box, RawVec};
-    /// struct MyVec<T, A: Alloc> {
-    ///     buf: RawVec<T, A>,
+    /// use allocator_api::{Box, RawVec};
+    /// struct MyVec<T> {
+    ///     buf: RawVec<T>,
     ///     len: usize,
     /// }
     ///
-    /// impl<T, A: Alloc> MyVec<T, A> {
+    /// impl<T> MyVec<T> {
     ///     pub fn push(&mut self, elem: T) {
     ///         if self.len == self.buf.cap() { self.buf.double(); }
     ///         // double would have aborted or panicked if the len exceeded
@@ -226,7 +261,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// }
     /// fn main() {
     ///     //let x = vec![1, 2, 3].into_boxed_slice();
-    ///     let mut v = MyVec { buf: RawVec::new_in(MyHeap), len: 0 };
+    ///     let mut v = MyVec { buf: RawVec::new(), len: 0 };
     ///     v.push(1);
     ///     v.push(2);
     ///     v.push(3);
@@ -236,6 +271,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     ///     static_ref[0] = 4;
     ///     assert_eq!(*static_ref, [4, 2, 3]);
     /// }
+    /// # }
     /// ```
     #[inline]
     pub fn leak<'a>(b: Box<T, A>) -> &'a mut T
@@ -282,12 +318,14 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// # Examples
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
+    /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # include!("../dummy.rs");
     /// # fn main() {
-    /// let x = Box::new_in(5, MyHeap);
+    /// let x = Box::new(5);
     /// let y = x.clone();
+    /// # }
     /// # }
     /// ```
     #[inline]
@@ -299,16 +337,18 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// # Examples
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
+    /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # include!("../dummy.rs");
     /// # fn main() {
-    /// let x = Box::new_in(5, MyHeap);
-    /// let mut y = Box::new_in(10, MyHeap);
+    /// let x = Box::new(5);
+    /// let mut y = Box::new(10);
     ///
     /// y.clone_from(&x);
     ///
     /// assert_eq!(*y, 5);
+    /// # }
     /// # }
     /// ```
     #[inline]

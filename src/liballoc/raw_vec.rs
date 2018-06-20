@@ -126,7 +126,8 @@ impl<T, A: Alloc> RawVec<T, A> {
     }
 }
 
-impl<T, A: Alloc + Default> RawVec<T, A> {
+#[cfg(feature = "global_alloc")]
+impl<T> RawVec<T, Global> {
     /// Creates the biggest possible RawVec (on the system heap)
     /// without allocating. If T has positive size, then this makes a
     /// RawVec with capacity 0. If T has 0 size, then it makes a
@@ -275,16 +276,17 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
-    /// use allocator_api::{Alloc, RawVec};
+    /// # test_using_global! {
+    /// use allocator_api::RawVec;
     /// # use std::ptr;
-    /// # include!("../dummy.rs");
-    /// struct MyVec<T, A: Alloc> {
-    ///     buf: RawVec<T, A>,
+    /// struct MyVec<T> {
+    ///     buf: RawVec<T>,
     ///     len: usize,
     /// }
     ///
-    /// impl<T, A: Alloc> MyVec<T, A> {
+    /// impl<T> MyVec<T> {
     ///     pub fn push(&mut self, elem: T) {
     ///         if self.len == self.buf.cap() { self.buf.double(); }
     ///         // double would have aborted or panicked if the len exceeded
@@ -296,8 +298,9 @@ impl<T, A: Alloc> RawVec<T, A> {
     ///     }
     /// }
     /// # fn main() {
-    /// #   let mut vec = MyVec { buf: RawVec::new_in(MyHeap), len: 0 };
+    /// #   let mut vec = MyVec { buf: RawVec::new(), len: 0 };
     /// #   vec.push(1);
+    /// # }
     /// # }
     /// ```
     #[inline(never)]
@@ -477,16 +480,17 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
+    /// # #[macro_use]
     /// extern crate allocator_api;
-    /// use allocator_api::{Alloc, RawVec};
+    /// # test_using_global! {
+    /// use allocator_api::RawVec;
     /// # use std::ptr;
-    /// # include!("../dummy.rs");
-    /// struct MyVec<T, A: Alloc> {
-    ///     buf: RawVec<T, A>,
+    /// struct MyVec<T> {
+    ///     buf: RawVec<T>,
     ///     len: usize,
     /// }
     ///
-    /// impl<T: Clone, A: Alloc> MyVec<T, A> {
+    /// impl<T: Clone> MyVec<T> {
     ///     pub fn push_all(&mut self, elems: &[T]) {
     ///         self.buf.reserve(self.len, elems.len());
     ///         // reserve would have aborted or panicked if the len exceeded
@@ -500,8 +504,9 @@ impl<T, A: Alloc> RawVec<T, A> {
     ///     }
     /// }
     /// # fn main() {
-    /// #   let mut vector = MyVec { buf: RawVec::new_in(MyHeap), len: 0 };
+    /// #   let mut vector = MyVec { buf: RawVec::new(), len: 0 };
     /// #   vector.push_all(&[1, 3, 5, 7, 9]);
+    /// # }
     /// # }
     /// ```
     pub fn reserve(&mut self, used_cap: usize, needed_extra_cap: usize) {
@@ -762,13 +767,12 @@ fn capacity_overflow() -> ! {
     panic!("capacity overflow")
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "global_alloc"))]
 mod tests {
     use super::*;
     mod allocator_api {
         pub use ::alloc::*;
     }
-    include!("../dummy.rs");
 
     #[test]
     fn allocator_param() {
@@ -793,13 +797,13 @@ mod tests {
                 if size > self.fuel {
                     return Err(AllocErr);
                 }
-                match MyHeap.alloc(layout) {
+                match Global.alloc(layout) {
                     ok @ Ok(_) => { self.fuel -= size; ok }
                     err @ Err(_) => err,
                 }
             }
             unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
-                MyHeap.dealloc(ptr, layout)
+                Global.dealloc(ptr, layout)
             }
         }
 
@@ -813,14 +817,14 @@ mod tests {
     #[test]
     fn reserve_does_not_overallocate() {
         {
-            let mut v: RawVec<u32, _> = RawVec::new_in(MyHeap);
+            let mut v: RawVec<u32> = RawVec::new();
             // First `reserve` allocates like `reserve_exact`
             v.reserve(0, 9);
             assert_eq!(9, v.cap());
         }
 
         {
-            let mut v: RawVec<u32, _> = RawVec::new_in(MyHeap);
+            let mut v: RawVec<u32> = RawVec::new();
             v.reserve(0, 7);
             assert_eq!(7, v.cap());
             // 97 if more than double of 7, so `reserve` should work
@@ -830,7 +834,7 @@ mod tests {
         }
 
         {
-            let mut v: RawVec<u32, _> = RawVec::new_in(MyHeap);
+            let mut v: RawVec<u32> = RawVec::new();
             v.reserve(0, 12);
             assert_eq!(12, v.cap());
             v.reserve(12, 3);

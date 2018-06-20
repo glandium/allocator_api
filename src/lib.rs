@@ -22,6 +22,20 @@ macro_rules! global_alloc {
     ($($t:tt)*) => { $($t)* };
 }
 
+#[cfg(feature = "std")]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! test_using_global {
+    ($($t:tt)*) => { $($t)* };
+}
+
+#[cfg(not(feature = "std"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! test_using_global {
+    ($($t:tt)*) => { fn main() {} };
+}
+
 #[path = "libcore/alloc.rs"]
 mod core_alloc;
 #[path = "libstd/alloc.rs"]
