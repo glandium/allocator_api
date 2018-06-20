@@ -151,8 +151,8 @@ mod global {
 
 pub mod alloc {
     pub use core_alloc::*;
-    pub use std_alloc::rust_oom as oom;
-    pub use std_alloc::{set_oom_hook, take_oom_hook};
+    pub use std_alloc::rust_oom as handle_alloc_error;
+    pub use std_alloc::{set_alloc_error_hook, take_alloc_error_hook};
 
     #[cfg(feature = "std")]
     pub use global::Global;

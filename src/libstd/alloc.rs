@@ -46,7 +46,7 @@ pub fn take_alloc_error_hook() -> fn(Layout) {
     }
 }
 
-fn default_alloc_error_hook(layout: Layout) {
+fn default_alloc_error_hook(_layout: Layout) {
 }
 
 pub extern fn rust_oom(layout: Layout) -> ! {
