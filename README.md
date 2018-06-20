@@ -9,7 +9,7 @@ Usable with stable rust, but requires 1.26.
 ## Differences with nightly rust
 
 The code was copied from the rust repository as of
-4367e41ea2a105c373de27c2f080fc2527cc6927, with #[stable] and #[unstable]
+2b789bd0570983e82533f9ed30c80312ac334694, with #[stable] and #[unstable]
 annotations removed.
 
 In the alloc module (corresponding to parts of both core::alloc and

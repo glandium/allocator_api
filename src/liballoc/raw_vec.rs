@@ -15,7 +15,7 @@ use core::ops::Drop;
 use core::ptr::{self, NonNull};
 use core::slice;
 
-use alloc::{Alloc, Layout, oom};
+use alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
 use alloc::Global;
 use alloc::CollectionAllocErr;
@@ -112,7 +112,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                 };
                 match result {
                     Ok(ptr) => ptr.cast(),
-                    Err(_) => oom(layout),
+                    Err(_) => handle_alloc_error(layout),
                 }
             };
 
@@ -333,7 +333,9 @@ impl<T, A: Alloc> RawVec<T, A> {
                                                  new_size);
                     match ptr_res {
                         Ok(ptr) => (new_cap, ptr.cast().into()),
-                        Err(_) => oom(Layout::from_size_align_unchecked(new_size, cur.align())),
+                        Err(_) => handle_alloc_error(
+                            Layout::from_size_align_unchecked(new_size, cur.align())
+                        ),
                     }
                 }
                 None => {
@@ -342,7 +344,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                     let new_cap = if elem_size > (!0) / 8 { 1 } else { 4 };
                     match self.a.alloc_array::<T>(new_cap) {
                         Ok(ptr) => (new_cap, ptr.into()),
-                        Err(_) => oom(Layout::array::<T>(new_cap).unwrap()),
+                        Err(_) => handle_alloc_error(Layout::array::<T>(new_cap).unwrap()),
                     }
                 }
             };
@@ -627,7 +629,9 @@ impl<T, A: Alloc> RawVec<T, A> {
                                      old_layout,
                                      new_size) {
                     Ok(p) => self.ptr = p.cast().into(),
-                    Err(_) => oom(Layout::from_size_align_unchecked(new_size, align)),
+                    Err(_) => handle_alloc_error(
+                        Layout::from_size_align_unchecked(new_size, align)
+                    ),
                 }
             }
             self.cap = amount;
@@ -689,7 +693,7 @@ impl<T, A: Alloc> RawVec<T, A> {
             };
 
             match (&res, fallibility) {
-                (Err(AllocErr), Infallible) => oom(new_layout),
+                (Err(AllocErr), Infallible) => handle_alloc_error(new_layout),
                 _ => {}
             }
 

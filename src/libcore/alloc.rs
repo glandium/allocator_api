@@ -504,10 +504,10 @@ pub unsafe trait Alloc {
     /// library that aborts on memory exhaustion.)
     ///
     /// Clients wishing to abort computation in response to an
-    /// allocation error are encouraged to call the [`oom`] function,
+    /// allocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr>;
 
     /// Deallocate the memory referenced by `ptr`.
@@ -614,10 +614,10 @@ pub unsafe trait Alloc {
     /// library that aborts on memory exhaustion.)
     ///
     /// Clients wishing to abort computation in response to a
-    /// reallocation error are encouraged to call the [`oom`] function,
+    /// reallocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn realloc(&mut self,
                       ptr: NonNull<u8>,
                       layout: Layout,
@@ -660,10 +660,10 @@ pub unsafe trait Alloc {
     /// constraints, just as in `alloc`.
     ///
     /// Clients wishing to abort computation in response to an
-    /// allocation error are encouraged to call the [`oom`] function,
+    /// allocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn alloc_zeroed(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
         let size = layout.size();
         let p = self.alloc(layout);
@@ -688,10 +688,10 @@ pub unsafe trait Alloc {
     /// constraints, just as in `alloc`.
     ///
     /// Clients wishing to abort computation in response to an
-    /// allocation error are encouraged to call the [`oom`] function,
+    /// allocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn alloc_excess(&mut self, layout: Layout) -> Result<Excess, AllocErr> {
         let usable_size = self.usable_size(&layout);
         self.alloc(layout).map(|p| Excess(p, usable_size.1))
@@ -712,10 +712,10 @@ pub unsafe trait Alloc {
     /// constraints, just as in `realloc`.
     ///
     /// Clients wishing to abort computation in response to a
-    /// reallocation error are encouraged to call the [`oom`] function,
+    /// reallocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn realloc_excess(&mut self,
                              ptr: NonNull<u8>,
                              layout: Layout,
@@ -757,7 +757,7 @@ pub unsafe trait Alloc {
     /// unable to assert that the memory block referenced by `ptr`
     /// could fit `layout`.
     ///
-    /// Note that one cannot pass `CannotReallocInPlace` to the `oom`
+    /// Note that one cannot pass `CannotReallocInPlace` to the `handle_alloc_error`
     /// function; clients are expected either to be able to recover from
     /// `grow_in_place` failures without aborting, or to fall back on
     /// another reallocation method before resorting to an abort.
@@ -812,7 +812,7 @@ pub unsafe trait Alloc {
     /// unable to assert that the memory block referenced by `ptr`
     /// could fit `layout`.
     ///
-    /// Note that one cannot pass `CannotReallocInPlace` to the `oom`
+    /// Note that one cannot pass `CannotReallocInPlace` to the `handle_alloc_error`
     /// function; clients are expected either to be able to recover from
     /// `shrink_in_place` failures without aborting, or to fall back
     /// on another reallocation method before resorting to an abort.
@@ -861,10 +861,10 @@ pub unsafe trait Alloc {
     /// will *not* yield undefined behavior.
     ///
     /// Clients wishing to abort computation in response to an
-    /// allocation error are encouraged to call the [`oom`] function,
+    /// allocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     fn alloc_one<T>(&mut self) -> Result<NonNull<T>, AllocErr>
         where Self: Sized
     {
@@ -930,10 +930,10 @@ pub unsafe trait Alloc {
     /// Always returns `Err` on arithmetic overflow.
     ///
     /// Clients wishing to abort computation in response to an
-    /// allocation error are encouraged to call the [`oom`] function,
+    /// allocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     fn alloc_array<T>(&mut self, n: usize) -> Result<NonNull<T>, AllocErr>
         where Self: Sized
     {
@@ -977,10 +977,10 @@ pub unsafe trait Alloc {
     /// Always returns `Err` on arithmetic overflow.
     ///
     /// Clients wishing to abort computation in response to a
-    /// reallocation error are encouraged to call the [`oom`] function,
+    /// reallocation error are encouraged to call the [`handle_alloc_error`] function,
     /// rather than directly invoking `panic!` or similar.
     ///
-    /// [`oom`]: ../../alloc/alloc/fn.oom.html
+    /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn realloc_array<T>(&mut self,
                                ptr: NonNull<T>,
                                n_old: usize,
