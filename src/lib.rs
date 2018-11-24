@@ -40,6 +40,8 @@ mod core_alloc;
 mod std_alloc;
 #[path = "liballoc/boxed.rs"]
 pub mod boxed;
+#[path = "liballoc/collections/mod.rs"]
+pub mod collections;
 #[path = "liballoc/raw_vec.rs"]
 pub mod raw_vec;
 

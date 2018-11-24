@@ -58,6 +58,8 @@ impl Layout {
     /// or returns `LayoutErr` if either of the following conditions
     /// are not met:
     ///
+    /// * `align` must not be zero,
+    ///
     /// * `align` must be a power of two,
     ///
     /// * `size`, when rounded up to the nearest multiple of `align`,
@@ -150,14 +152,12 @@ impl Layout {
     /// alignment. In other words, if `K` has size 16, `K.align_to(32)`
     /// will *still* have size 16.
     ///
-    /// # Panics
-    ///
-    /// Panics if the combination of `self.size()` and the given `align`
-    /// violates the conditions listed in
+    /// Returns an error if the combination of `self.size()` and the given
+    /// `align` violates the conditions listed in
     /// [`Layout::from_size_align`](#method.from_size_align).
     #[inline]
-    pub fn align_to(&self, align: usize) -> Self {
-        Layout::from_size_align(self.size(), cmp::max(self.align(), align)).unwrap()
+    pub fn align_to(&self, align: usize) -> Result<Self, LayoutErr> {
+        Layout::from_size_align(self.size(), cmp::max(self.align(), align))
     }
 
     /// Returns the amount of padding we must insert after `self`
@@ -201,7 +201,23 @@ impl Layout {
 
         let len_rounded_up = len.wrapping_add(align).wrapping_sub(1)
             & !align.wrapping_sub(1);
-        return len_rounded_up.wrapping_sub(len);
+        len_rounded_up.wrapping_sub(len)
+    }
+
+    /// Creates a layout by rounding the size of this layout up to a multiple
+    /// of the layout's alignment.
+    ///
+    /// Returns `Err` if the padded size would overflow.
+    ///
+    /// This is equivalent to adding the result of `padding_needed_for`
+    /// to the layout's current size.
+    #[inline]
+    pub fn pad_to_align(&self) -> Result<Layout, LayoutErr> {
+        let pad = self.padding_needed_for(self.align());
+        let new_size = self.size().checked_add(pad)
+            .ok_or(LayoutErr { private: () })?;
+
+        Layout::from_size_align(new_size, self.align())
     }
 
     /// Creates a layout describing the record for `n` instances of
@@ -230,6 +246,9 @@ impl Layout {
     /// `next`, including any necessary padding to ensure that `next`
     /// will be properly aligned. Note that the result layout will
     /// satisfy the alignment properties of both `self` and `next`.
+    ///
+    /// The resulting layout will be the same as that of a C struct containing
+    /// two fields with the layouts of `self` and `next`, in that order.
     ///
     /// Returns `Some((k, offset))`, where `k` is layout of the concatenated
     /// record and `offset` is the relative location, in bytes, of the
@@ -274,22 +293,13 @@ impl Layout {
     /// padding is inserted, the alignment of `next` is irrelevant,
     /// and is not incorporated *at all* into the resulting layout.
     ///
-    /// Returns `(k, offset)`, where `k` is layout of the concatenated
-    /// record and `offset` is the relative location, in bytes, of the
-    /// start of the `next` embedded within the concatenated record
-    /// (assuming that the record itself starts at offset 0).
-    ///
-    /// (The `offset` is always the same as `self.size()`; we use this
-    ///  signature out of convenience in matching the signature of
-    ///  `extend`.)
-    ///
     /// On arithmetic overflow, returns `LayoutErr`.
     #[inline]
-    pub fn extend_packed(&self, next: Self) -> Result<(Self, usize), LayoutErr> {
+    pub fn extend_packed(&self, next: Self) -> Result<Self, LayoutErr> {
         let new_size = self.size().checked_add(next.size())
             .ok_or(LayoutErr { private: () })?;
         let layout = Layout::from_size_align(new_size, self.align())?;
-        Ok((layout, self.size()))
+        Ok(layout)
     }
 
     /// Creates a layout describing the record for a `[T; n]`.
@@ -351,31 +361,6 @@ impl CannotReallocInPlace {
 impl fmt::Display for CannotReallocInPlace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.description())
-    }
-}
-
-/// Augments `AllocErr` with a CapacityOverflow variant.
-// FIXME: should this be in libcore or liballoc?
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum CollectionAllocErr {
-    /// Error due to the computed capacity exceeding the collection's maximum
-    /// (usually `isize::MAX` bytes).
-    CapacityOverflow,
-    /// Error due to the allocator (see the `AllocErr` type's docs).
-    AllocErr,
-}
-
-impl From<AllocErr> for CollectionAllocErr {
-    #[inline]
-    fn from(AllocErr: AllocErr) -> Self {
-        CollectionAllocErr::AllocErr
-    }
-}
-
-impl From<LayoutErr> for CollectionAllocErr {
-    #[inline]
-    fn from(_: LayoutErr) -> Self {
-        CollectionAllocErr::CapacityOverflow
     }
 }
 
@@ -563,7 +548,7 @@ pub unsafe trait Alloc {
     // realloc. alloc_excess, realloc_excess
 
     /// Returns a pointer suitable for holding data described by
-    /// a new layout with `layout`’s alginment and a size given
+    /// a new layout with `layout`’s alignment and a size given
     /// by `new_size`. To
     /// accomplish this, this may extend or shrink the allocation
     /// referenced by `ptr` to fit the new layout.
@@ -769,9 +754,9 @@ pub unsafe trait Alloc {
         // _l <= layout.size()                       [guaranteed by usable_size()]
         //       layout.size() <= new_layout.size()  [required by this method]
         if new_size <= u {
-            return Ok(());
+            Ok(())
         } else {
-            return Err(CannotReallocInPlace);
+            Err(CannotReallocInPlace)
         }
     }
 
@@ -824,9 +809,9 @@ pub unsafe trait Alloc {
         //                      layout.size() <= _u  [guaranteed by usable_size()]
         // new_layout.size() <= layout.size()        [required by this method]
         if l <= new_size {
-            return Ok(());
+            Ok(())
         } else {
-            return Err(CannotReallocInPlace);
+            Err(CannotReallocInPlace)
         }
     }
 

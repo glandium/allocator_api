@@ -49,7 +49,7 @@ pub fn take_alloc_error_hook() -> fn(Layout) {
 fn default_alloc_error_hook(_layout: Layout) {
 }
 
-pub extern fn rust_oom(layout: Layout) -> ! {
+pub fn rust_oom(layout: Layout) -> ! {
     let hook = HOOK.load(Ordering::SeqCst);
     let hook: fn(Layout) = if hook.is_null() {
         default_alloc_error_hook

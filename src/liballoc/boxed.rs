@@ -13,9 +13,10 @@
 
 use core::borrow;
 use core::cmp::Ordering;
+use core::convert::From;
 use core::fmt;
 use core::hash::{Hash, Hasher};
-use core::iter::FusedIterator;
+use core::iter::{Iterator, FusedIterator};
 use core::marker::PhantomData;
 use core::mem;
 use core::ops::{Deref, DerefMut};
@@ -160,7 +161,9 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
         }
     }
 
-    /// Consumes the `Box`, returning the wrapped raw pointer.
+    /// Consumes the `Box`, returning a wrapped raw pointer.
+    ///
+    /// The pointer will be properly aligned and non-null.
     ///
     /// After calling this function, the caller is responsible for the
     /// memory previously managed by the `Box`. In particular, the
@@ -195,7 +198,9 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     }
 
     /// Consumes and leaks the `Box`, returning a mutable reference,
-    /// `&'a mut T`. Here, the lifetime `'a` may be chosen to be `'static`.
+    /// `&'a mut T`. Note that the type `T` must outlive the chosen lifetime
+    /// `'a`. If the type has only static references, or none at all, then this
+    /// may be chosen to be `'static`.
     ///
     /// This function is mainly useful for data that lives for the remainder of
     /// the program's life. Dropping the returned reference will cause a memory
@@ -554,7 +559,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<[T], A> {
         impl<T, A: Alloc> Drop for BoxBuilder<T, A> {
             fn drop(&mut self) {
                 let mut data = self.data.ptr();
-                let max = unsafe { data.offset(self.len as isize) };
+                let max = unsafe { data.add(self.len) };
 
                 while data != max {
                     unsafe {

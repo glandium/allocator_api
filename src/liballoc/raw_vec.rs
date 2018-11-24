@@ -18,8 +18,8 @@ use core::slice;
 use alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
 use alloc::Global;
-use alloc::CollectionAllocErr;
-use alloc::CollectionAllocErr::*;
+use collections::CollectionAllocErr;
+use collections::CollectionAllocErr::*;
 use boxed::Box;
 
 /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
@@ -44,7 +44,7 @@ use boxed::Box;
 /// This enables you to use capacity growing logic catch the overflows in your length
 /// that might occur with zero-sized types.
 ///
-/// However this means that you need to be careful when roundtripping this type
+/// However this means that you need to be careful when round-tripping this type
 /// with a `Box<[T]>`: `cap()` won't yield the len. However `with_capacity`,
 /// `shrink_to_fit`, and `from_box` will actually set RawVec's private capacity
 /// field. This allows zero-sized types to not be special-cased by consumers of
@@ -289,7 +289,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     ///         // double would have aborted or panicked if the len exceeded
     ///         // `isize::MAX` so this is safe to do unchecked now.
     ///         unsafe {
-    ///             ptr::write(self.buf.ptr().offset(self.len as isize), elem);
+    ///             ptr::write(self.buf.ptr().add(self.len), elem);
     ///         }
     ///         self.len += 1;
     ///     }
@@ -495,7 +495,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     ///         // `isize::MAX` so this is safe to do unchecked now.
     ///         for x in elems {
     ///             unsafe {
-    ///                 ptr::write(self.buf.ptr().offset(self.len as isize), x.clone());
+    ///                 ptr::write(self.buf.ptr().add(self.len), x.clone());
     ///             }
     ///             self.len += 1;
     ///         }
