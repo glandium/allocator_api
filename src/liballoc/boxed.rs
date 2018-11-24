@@ -192,7 +192,41 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// ```
     #[inline]
     pub fn into_raw(b: Box<T, A>) -> *mut T {
-        let ptr = b.ptr.as_ptr();
+        Box::into_raw_non_null(b).as_ptr()
+    }
+
+    /// Consumes the `Box`, returning the wrapped pointer as `NonNull<T>`.
+    ///
+    /// After calling this function, the caller is responsible for the
+    /// memory previously managed by the `Box`. In particular, the
+    /// caller should properly destroy `T` and release the memory. The
+    /// proper way to do so is to convert the `NonNull<T>` pointer
+    /// into a raw pointer and back into a `Box` with the [`Box::from_raw`]
+    /// function.
+    ///
+    /// Note: this is an associated function, which means that you have
+    /// to call it as `Box::into_raw_non_null(b)`
+    /// instead of `b.into_raw_non_null()`. This
+    /// is so that there is no conflict with a method on the inner type.
+    ///
+    /// [`Box::from_raw`]: struct.Box.html#method.from_raw
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[macro_use] extern crate allocator_api;
+    /// # test_using_global! {
+    /// use allocator_api::Box;
+    ///
+    /// fn main() {
+    ///     let x = Box::new(5);
+    ///     let ptr = Box::into_raw_non_null(x);
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn into_raw_non_null(b: Box<T, A>) -> NonNull<T> {
+        let ptr = b.ptr;
         mem::forget(b);
         ptr
     }
