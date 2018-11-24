@@ -8,7 +8,7 @@ This is a copy of the unstable allocator_api
 (https://github.com/rust-lang/rust/issues/32838) and of parts of the unstable
 alloc feature.
 
-Usable with stable rust, but requires 1.26.
+Usable with stable rust, but requires 1.28.
 """
 repository = "https://github.com/glandium/allocator_api"
 readme = "README.md"
@@ -17,6 +17,3 @@ keywords = ["no_std", "allocator"]
 [features]
 default = ["std"]
 std = []
-
-[build-dependencies]
-rustc_version = "0.2"

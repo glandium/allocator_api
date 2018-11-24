@@ -25,8 +25,6 @@ use alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
 use alloc::Global;
 use raw_vec::RawVec;
-#[cfg(not(feature = "nonnull_cast"))]
-use ::NonNullCast;
 
 /// A pointer type for heap allocation.
 global_alloc! {

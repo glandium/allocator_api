@@ -21,8 +21,6 @@ use alloc::Global;
 use alloc::CollectionAllocErr;
 use alloc::CollectionAllocErr::*;
 use boxed::Box;
-#[cfg(not(feature = "nonnull_cast"))]
-use ::NonNullCast;
 
 /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
 /// a buffer of memory on the heap without having to worry about all the corner cases
