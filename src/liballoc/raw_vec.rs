@@ -274,8 +274,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::RawVec;
     /// # use std::ptr;
@@ -480,8 +479,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::RawVec;
     /// # use std::ptr;

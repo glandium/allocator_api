@@ -43,8 +43,7 @@ impl<T, A: Alloc> Box<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::{Box, Global};
     /// # fn main() {
@@ -83,7 +82,6 @@ impl<T> Box<T> {
     /// # Examples
     ///
     /// ```
-    /// extern crate allocator_api;
     /// use allocator_api::Box;
     /// # fn main() {
     /// let five = Box::new(5);
@@ -115,7 +113,6 @@ impl<T: ?Sized> Box<T> {
     /// # Examples
     ///
     /// ```
-    /// extern crate allocator_api;
     /// use allocator_api::Box;
     /// # fn main() {
     /// let x = Box::new(5);
@@ -144,8 +141,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::{Box, Global};
     /// # fn main() {
@@ -182,8 +178,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
     /// # fn main() {
@@ -220,8 +215,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// Simple usage:
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
     /// fn main() {
@@ -236,8 +230,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// Unsized data:
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// # use std::ptr;
     /// use allocator_api::{Box, RawVec};
@@ -316,8 +309,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
     /// # fn main() {
@@ -335,8 +327,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use]
-    /// extern crate allocator_api;
+    /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
     /// # fn main() {
