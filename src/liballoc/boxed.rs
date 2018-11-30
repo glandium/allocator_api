@@ -62,10 +62,12 @@ impl<T, A: Alloc> Box<T, A> {
         } else {
             unsafe {
                 let ptr = a.alloc(layout).unwrap_or_else(|_| { handle_alloc_error(layout) });
-                ptr::write(ptr.as_ptr() as *mut T, x);
                 ptr.cast()
             }
         };
+        unsafe {
+            ptr::write(ptr.as_ptr() as *mut T, x);
+        }
         Box {
             ptr: ptr,
             marker: PhantomData,
