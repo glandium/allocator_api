@@ -317,9 +317,9 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
 impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
     fn drop(&mut self) {
         unsafe {
-            let value = self.ptr.as_ref();
-            if mem::size_of_val(value) != 0 {
-                let layout = Layout::for_value(value);
+            let layout = Layout::for_value(self.ptr.as_ref());
+            ptr::drop_in_place(self.ptr.as_ptr());
+            if layout.size() != 0 {
                 self.a.dealloc(self.ptr.cast(), layout);
             }
         }
