@@ -16,8 +16,7 @@ In the alloc module (corresponding to parts of both core::alloc and
 std::alloc), the `oom` function infinitely loops instead of calling
 `core::intrinsics::abort`, which is not stable. Users of this crate should use
 `set_oom_hook` to set their own oom function that aborts in the right way (in
-non-no_std cases, one can use `process::abort()`). The `Opaque` type is an
-empty enum instead of an (not yet stable) extern type.
+non-no_std cases, one can use `process::abort()`).
 
 In the raw_vec module (corresponding to alloc::raw_vec), `RawVec` uses
 `NonNull` instead of `Unique`.
