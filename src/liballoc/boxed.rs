@@ -11,8 +11,9 @@ use core::convert::From;
 use core::fmt;
 use core::hash::{Hash, Hasher};
 use core::iter::{Iterator, FusedIterator};
-use core::marker::PhantomData;
+use core::marker::{PhantomData, Unpin};
 use core::mem;
+use core::pin::Pin;
 use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 
@@ -68,6 +69,14 @@ impl<T, A: Alloc> Box<T, A> {
             a: a,
         }
     }
+
+    /// Constructs a new `Pin<Box<T>>`. If `T` does not implement `Unpin`, then
+    /// `x` will be pinned in memory and unable to be moved.
+    #[inline(always)]
+    pub fn pin_in(x: T, a: A) -> Pin<Box<T, A>> {
+        Box::new_in(x, a).into()
+    }
+
 }
 
 #[cfg(feature = "std")]
@@ -87,6 +96,13 @@ impl<T> Box<T> {
     #[inline(always)]
     pub fn new(x: T) -> Box<T> {
         Box::new_in(x, Global)
+    }
+
+    /// Constructs a new `Pin<Box<T>>`. If `T` does not implement `Unpin`, then
+    /// `x` will be pinned in memory and unable to be moved.
+    #[inline(always)]
+    pub fn pin(x: T) -> Pin<Box<T>> {
+        Box::new(x).into()
     }
 }
 
@@ -306,6 +322,18 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     {
         unsafe { &mut *Box::into_raw(b) }
     }
+
+    /// Converts a `Box<T, A>` into a `Pin<Box<T, A>>`
+    ///
+    /// This conversion does not allocate and happens in place.
+    ///
+    /// This is also available via [`From`].
+    fn into_pin(boxed: Box<T, A>) -> Pin<Box<T, A>> {
+        // It's not possible to move or replace the insides of a `Pin<Box<T>>`
+        // when `T: !Unpin`,  so it's safe to pin it directly without any
+        // additional requirements.
+        unsafe { Pin::new_unchecked(boxed) }
+    }
 }
 
 impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
@@ -499,6 +527,15 @@ impl<T, A: Alloc + Default> From<T> for Box<T, A> {
     }
 }
 
+impl<T: ?Sized, A: Alloc> From<Box<T, A>> for Pin<Box<T, A>> {
+    /// Converts a `Box<T, A>` into a `Pin<Box<T, A>>`
+    ///
+    /// This conversion does not allocate and happens in place.
+    fn from(boxed: Box<T, A>) -> Self {
+        Box::into_pin(boxed)
+    }
+}
+
 impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
     /// Converts a `&[T]` into a `Box<[T], A>`
     ///
@@ -662,3 +699,27 @@ impl<T: ?Sized, A: Alloc> AsMut<T> for Box<T, A> {
         &mut **self
     }
 }
+
+/* Nota bene
+ *
+ *  We could have chosen not to add this impl, and instead have written a
+ *  function of Pin<Box<T>> to Pin<T>. Such a function would not be sound,
+ *  because Box<T> implements Unpin even when T does not, as a result of
+ *  this impl.
+ *
+ *  We chose this API instead of the alternative for a few reasons:
+ *      - Logically, it is helpful to understand pinning in regard to the
+ *        memory region being pointed to. For this reason none of the
+ *        standard library pointer types support projecting through a pin
+ *        (Box<T> is the only pointer type in std for which this would be
+ *        safe.)
+ *      - It is in practice very useful to have Box<T> be unconditionally
+ *        Unpin because of trait objects, for which the structural auto
+ *        trait functionality does not apply (e.g., Box<dyn Foo> would
+ *        otherwise not be Unpin).
+ *
+ *  Another type with the same semantics as Box but only a conditional
+ *  implementation of `Unpin` (where `T: Unpin`) would be valid/safe, and
+ *  could have a method to project a Pin<T> from it.
+ */
+impl<T: ?Sized, A: Alloc> Unpin for Box<T, A> { }
