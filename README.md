@@ -8,9 +8,8 @@ Usable with stable rust, but requires 1.33.
 
 ## Differences with nightly rust
 
-The code was copied from the rust repository as of
-2b789bd0570983e82533f9ed30c80312ac334694, with #[stable] and #[unstable]
-annotations removed.
+The code was copied from the rust code as of 1.34.0
+with #[stable] annotations and #[unstable] implementations removed.
 
 In the alloc module (corresponding to parts of both core::alloc and
 std::alloc), the `oom` function infinitely loops instead of calling
