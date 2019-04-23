@@ -5,7 +5,7 @@ use core::ops::Drop;
 use core::ptr::{self, NonNull};
 use core::slice;
 
-use crate::alloc::{Alloc, Layout, handle_alloc_error};
+use crate::alloc::{Alloc, Layout, LayoutExt, handle_alloc_error};
 #[cfg(feature = "std")]
 use crate::alloc::Global;
 use crate::collections::CollectionAllocErr;
@@ -331,7 +331,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                     let new_cap = if elem_size > (!0) / 8 { 1 } else { 4 };
                     match self.a.alloc_array::<T>(new_cap) {
                         Ok(ptr) => (new_cap, ptr.into()),
-                        Err(_) => handle_alloc_error(Layout::array::<T>(new_cap).unwrap()),
+                        Err(_) => handle_alloc_error(<Layout as LayoutExt>::array::<T>(new_cap).unwrap()),
                     }
                 }
             };
@@ -546,7 +546,7 @@ impl<T, A: Alloc> RawVec<T, A> {
             // (regardless of whether `self.cap - used_cap` wrapped).
             // Therefore we can safely call grow_in_place.
 
-            let new_layout = Layout::new::<T>().repeat(new_cap).unwrap().0;
+            let new_layout = LayoutExt::repeat(&Layout::new::<T>(), new_cap).unwrap().0;
             // FIXME: may crash and burn on over-reserve
             alloc_guard(new_layout.size()).unwrap_or_else(|_| capacity_overflow());
             match self.a.grow_in_place(
@@ -666,7 +666,7 @@ impl<T, A: Alloc> RawVec<T, A> {
                 Exact => used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?,
                 Amortized => self.amortized_new_size(used_cap, needed_extra_cap)?,
             };
-            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
+            let new_layout = <Layout as LayoutExt>::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
 
             alloc_guard(new_layout.size())?;
 

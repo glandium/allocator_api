@@ -53,17 +53,10 @@ mod global {
     use core::ptr::NonNull;
     use crate::core_alloc::{AllocErr, Layout};
 
-    use core::alloc::Layout as CoreLayout;
     use std::alloc::{alloc, alloc_zeroed, dealloc, realloc};
 
     #[derive(Copy, Clone, Default, Debug)]
     pub struct Global;
-
-    impl From<Layout> for CoreLayout {
-        fn from(l: Layout) -> Self {
-            unsafe { Self::from_size_align_unchecked(l.size(), l.align()) }
-        }
-    }
 
     unsafe impl crate::core_alloc::Alloc for Global {
         unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
