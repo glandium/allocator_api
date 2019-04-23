@@ -51,7 +51,7 @@ extern crate std;
 #[cfg(feature = "std")]
 mod global {
     use core::ptr::NonNull;
-    use core_alloc::{AllocErr, Layout};
+    use crate::core_alloc::{AllocErr, Layout};
 
     use core::alloc::Layout as CoreLayout;
     use std::alloc::{alloc, alloc_zeroed, dealloc, realloc};
@@ -65,7 +65,7 @@ mod global {
         }
     }
 
-    unsafe impl ::core_alloc::Alloc for Global {
+    unsafe impl crate::core_alloc::Alloc for Global {
         unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
             NonNull::new(alloc(layout.into())).ok_or(AllocErr)
         }
@@ -88,14 +88,14 @@ mod global {
 }
 
 pub mod alloc {
-    pub use core_alloc::*;
-    pub use std_alloc::rust_oom as handle_alloc_error;
-    pub use std_alloc::{set_alloc_error_hook, take_alloc_error_hook};
+    pub use crate::core_alloc::*;
+    pub use crate::std_alloc::rust_oom as handle_alloc_error;
+    pub use crate::std_alloc::{set_alloc_error_hook, take_alloc_error_hook};
 
     #[cfg(feature = "std")]
-    pub use global::Global;
+    pub use crate::global::Global;
 }
 
-pub use alloc::*;
-pub use boxed::*;
-pub use raw_vec::*;
+pub use crate::alloc::*;
+pub use crate::boxed::*;
+pub use crate::raw_vec::*;

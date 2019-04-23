@@ -15,12 +15,12 @@ use core::ops::Drop;
 use core::ptr::{self, NonNull};
 use core::slice;
 
-use alloc::{Alloc, Layout, handle_alloc_error};
+use crate::alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
-use alloc::Global;
-use collections::CollectionAllocErr;
-use collections::CollectionAllocErr::*;
-use boxed::Box;
+use crate::alloc::Global;
+use crate::collections::CollectionAllocErr;
+use crate::collections::CollectionAllocErr::*;
+use crate::boxed::Box;
 
 /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
 /// a buffer of memory on the heap without having to worry about all the corner cases
@@ -658,7 +658,7 @@ impl<T, A: Alloc> RawVec<T, A> {
         strategy: ReserveStrategy,
     ) -> Result<(), CollectionAllocErr> {
         unsafe {
-            use alloc::AllocErr;
+            use crate::alloc::AllocErr;
 
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than usize::MAX" in that case.
@@ -771,12 +771,12 @@ fn capacity_overflow() -> ! {
 mod tests {
     use super::*;
     mod allocator_api {
-        pub use ::alloc::*;
+        pub use crate::alloc::*;
     }
 
     #[test]
     fn allocator_param() {
-        use alloc::AllocErr;
+        use crate::alloc::AllocErr;
 
         // Writing a test of integration between third-party
         // allocators and RawVec is a little tricky because the RawVec

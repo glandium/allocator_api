@@ -10,7 +10,7 @@
 
 //! Collection types.
 
-use alloc::{AllocErr, LayoutErr};
+use crate::alloc::{AllocErr, LayoutErr};
 
 /// Augments `AllocErr` with a CapacityOverflow variant.
 #[derive(Clone, PartialEq, Eq, Debug)]

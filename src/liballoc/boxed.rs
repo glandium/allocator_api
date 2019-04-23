@@ -22,10 +22,10 @@ use core::mem;
 use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
 
-use alloc::{Alloc, Layout, handle_alloc_error};
+use crate::alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
-use alloc::Global;
-use raw_vec::RawVec;
+use crate::alloc::Global;
+use crate::raw_vec::RawVec;
 
 /// A pointer type for heap allocation.
 global_alloc! {

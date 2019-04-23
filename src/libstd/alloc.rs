@@ -10,7 +10,7 @@
 
 //! Memory allocation APIs
 
-use alloc::Layout;
+use crate::alloc::Layout;
 
 use core::sync::atomic::{AtomicPtr, Ordering};
 use core::{mem, ptr};
