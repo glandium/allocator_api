@@ -1,9 +1,3 @@
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! A pointer type for heap allocation.
 //!
 //! `Box<T, A>` is similar to
@@ -482,12 +476,49 @@ impl<T: ?Sized + Hasher, A: Alloc> Hasher for Box<T, A> {
 }
 
 impl<T, A: Alloc + Default> From<T> for Box<T, A> {
+    /// Converts a generic type `T` into a `Box<T, A>`
+    ///
+    /// The conversion allocates with the associated allocator and moves `t`
+    /// from the stack into it.
+    ///
+    /// # Examples
+    /// ```rust
+    /// # #[macro_use] extern crate allocator_api;
+    /// # test_using_global! {
+    /// use allocator_api::Box;
+    /// # fn main() {
+    /// let x = 5;
+    /// let boxed = Box::new(5);
+    ///
+    /// assert_eq!(Box::from(x), boxed);
+    /// # }
+    /// # }
+    /// ```
     fn from(t: T) -> Self {
         Box::new_in(t, Default::default())
     }
 }
 
 impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
+    /// Converts a `&[T]` into a `Box<[T], A>`
+    ///
+    /// This conversion allocates with the associated allocator
+    /// and performs a copy of `slice`.
+    ///
+    /// # Examples
+    /// ```rust
+    /// # #[macro_use] extern crate allocator_api;
+    /// # test_using_global! {
+    /// use allocator_api::Box;
+    /// # fn main() {
+    /// // create a &[u8] which will be used to create a Box<[u8]>
+    /// let slice: &[u8] = &[104, 101, 108, 108, 111];
+    /// let boxed_slice: Box<[u8]> = Box::from(slice);
+    ///
+    /// println!("{:?}", boxed_slice);
+    /// # }
+    /// # }
+    /// ```
     fn from(slice: &'a [T]) -> Box<[T], A> {
         let a = Default::default();
         let mut boxed = unsafe { RawVec::with_capacity_in(slice.len(), a).into_box() };
@@ -497,19 +528,19 @@ impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
 }
 
 impl<T: fmt::Display + ?Sized, A: Alloc> fmt::Display for Box<T, A> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&**self, f)
     }
 }
 
 impl<T: fmt::Debug + ?Sized, A: Alloc> fmt::Debug for Box<T, A> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(&**self, f)
     }
 }
 
 impl<T: ?Sized, A: Alloc> fmt::Pointer for Box<T, A> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // It's not possible to extract the inner Uniq directly from the Box,
         // instead we cast it to a *const which aliases the Unique
         let ptr: *const T = &**self;
