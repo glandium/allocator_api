@@ -26,8 +26,8 @@ augmented such that it is associated with an allocator, similarly to `RawVec`.
 Its API is consequently slightly different from `std::boxed::Box` (e.g.
 `from_raw` is replaced with `from_raw_in`). The same (stable) features as
 `std::boxed::Box` are implemented, except for `downcast` for `Box<Any>` and
-`Box<Any + Send>`, and `Box<str>` functions. Like for `RawVec`, the type
-relies on `NonNull` rather than `Unique`.
+`Box<Any + Send>`. Like for `RawVec`, the type relies on `NonNull` rather than
+`Unique`.
 
 Caveat: the types provided in this crate cannot be used where the corresponding
 types from `std`/`alloc` are expected. Few APIs should be taking those types

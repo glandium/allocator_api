@@ -366,6 +366,20 @@ impl<T, A: Alloc + Default> Default for Box<[T], A> {
     }
 }
 
+/// Converts a boxed slice of bytes to a boxed string slice without checking
+/// that the string contains valid UTF-8.
+#[inline]
+pub unsafe fn from_boxed_utf8_unchecked<A: Alloc>(v: Box<[u8], A>) -> Box<str, A> {
+    let a = ptr::read(&v.a);
+    Box::from_raw_in(Box::into_raw(v) as *mut str, a)
+}
+
+impl<A: Alloc + Default> Default for Box<str, A> {
+    fn default() -> Box<str, A> {
+        unsafe { from_boxed_utf8_unchecked(Default::default()) }
+    }
+}
+
 impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// Returns a new box with a `clone()` of this box's contents.
     ///
@@ -406,6 +420,17 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     #[inline]
     fn clone_from(&mut self, source: &Box<T, A>) {
         (**self).clone_from(&(**source));
+    }
+}
+
+impl<A: Alloc + Clone> Clone for Box<str, A> {
+    fn clone(&self) -> Self {
+        let len = self.len();
+        let buf = RawVec::with_capacity_in(len, self.a.clone());
+        unsafe {
+            ptr::copy_nonoverlapping(self.as_ptr(), buf.ptr(), len);
+            from_boxed_utf8_unchecked(buf.into_box())
+        }
     }
 }
 
@@ -561,6 +586,61 @@ impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
         let mut boxed = unsafe { RawVec::with_capacity_in(slice.len(), a).into_box() };
         boxed.copy_from_slice(slice);
         boxed
+    }
+}
+
+impl<'a, A: Alloc + Default> From<&'a str> for Box<str, A> {
+    /// Converts a `&str` into a `Box<str, A>`
+    ///
+    /// This conversion allocates with the associated allocator
+    /// and performs a copy of `s`.
+    ///
+    /// # Examples
+    /// ```rust
+    /// # #[macro_use] extern crate allocator_api;
+    /// # test_using_global! {
+    /// use allocator_api::Box;
+    /// # fn main() {
+    /// let boxed: Box<str> = Box::from("hello");
+    /// println!("{}", boxed);
+    /// # }
+    /// # }
+    /// ```
+    #[inline]
+    fn from(s: &'a str) -> Box<str, A> {
+        unsafe { from_boxed_utf8_unchecked(Box::from(s.as_bytes())) }
+    }
+}
+
+impl<A: Alloc> From<Box<str, A>> for Box<[u8], A> {
+    /// Converts a `Box<str, A>` into a `Box<[u8], A>`
+    ///
+    /// This conversion does not allocate on the heap and happens in place.
+    ///
+    /// # Examples
+    /// ```rust
+    /// # #[macro_use] extern crate allocator_api;
+    /// # test_using_global! {
+    /// use allocator_api::Box;
+    /// # fn main() {
+    /// // create a Box<str> which will be used to create a Box<[u8]>
+    /// let boxed: Box<str> = Box::from("hello");
+    /// let boxed_str: Box<[u8]> = Box::from(boxed);
+    ///
+    /// // create a &[u8] which will be used to create a Box<[u8]>
+    /// let slice: &[u8] = &[104, 101, 108, 108, 111];
+    /// let boxed_slice = Box::from(slice);
+    ///
+    /// assert_eq!(boxed_slice, boxed_str);
+    /// # }
+    /// # }
+    /// ```
+    #[inline]
+    fn from(s: Box<str, A>) -> Self {
+        unsafe {
+            let a = ptr::read(&s.a);
+            Box::from_raw_in(Box::into_raw(s) as *mut [u8], a)
+        }
     }
 }
 
