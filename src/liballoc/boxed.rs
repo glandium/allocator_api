@@ -538,7 +538,7 @@ impl<T: ?Sized, A: Alloc> From<Box<T, A>> for Pin<Box<T, A>> {
     }
 }
 
-impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
+impl<T: Copy, A: Alloc + Default> From<&[T]> for Box<[T], A> {
     /// Converts a `&[T]` into a `Box<[T], A>`
     ///
     /// This conversion allocates with the associated allocator
@@ -556,7 +556,7 @@ impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
     /// println!("{:?}", boxed_slice);
     /// # }
     /// ```
-    fn from(slice: &'a [T]) -> Box<[T], A> {
+    fn from(slice: &[T]) -> Box<[T], A> {
         let a = Default::default();
         let mut boxed = unsafe { RawVec::with_capacity_in(slice.len(), a).into_box() };
         boxed.copy_from_slice(slice);
@@ -564,7 +564,7 @@ impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
     }
 }
 
-impl<'a, A: Alloc + Default> From<&'a str> for Box<str, A> {
+impl<A: Alloc + Default> From<&str> for Box<str, A> {
     /// Converts a `&str` into a `Box<str, A>`
     ///
     /// This conversion allocates with the associated allocator
@@ -580,7 +580,7 @@ impl<'a, A: Alloc + Default> From<&'a str> for Box<str, A> {
     /// # }
     /// ```
     #[inline]
-    fn from(s: &'a str) -> Box<str, A> {
+    fn from(s: &str) -> Box<str, A> {
         unsafe { from_boxed_utf8_unchecked(Box::from(s.as_bytes())) }
     }
 }
@@ -666,6 +666,9 @@ impl<I: Iterator + ?Sized, A: Alloc> Iterator for Box<I, A> {
 impl<I: DoubleEndedIterator + ?Sized, A: Alloc> DoubleEndedIterator for Box<I, A> {
     fn next_back(&mut self) -> Option<I::Item> {
         (**self).next_back()
+    }
+    fn nth_back(&mut self, n: usize) -> Option<I::Item> {
+        (**self).nth_back(n)
     }
 }
 
