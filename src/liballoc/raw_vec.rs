@@ -51,7 +51,8 @@ global_alloc! {
 impl<T, A: Alloc> RawVec<T, A> {
     /// Like `new` but parameterized over the choice of allocator for
     /// the returned RawVec.
-    pub fn new_in(a: A) -> Self {
+    pub const fn new_in(a: A) -> Self {
+        // !0 is usize::MAX. This branch should be stripped at compile time.
         // FIXME(mark-i-m): use this line when `if`s are allowed in `const`
         //let cap = if mem::size_of::<T>() == 0 { !0 } else { 0 };
 
@@ -118,8 +119,8 @@ impl<T> RawVec<T, Global> {
     /// RawVec with capacity 0. If T has 0 size, then it makes a
     /// RawVec with capacity `usize::MAX`. Useful for implementing
     /// delayed allocation.
-    pub fn new() -> Self {
-        Self::new_in(Default::default())
+    pub const fn new() -> Self {
+        Self::new_in(Global)
     }
 
     /// Creates a RawVec (on the system heap) with exactly the
@@ -139,16 +140,15 @@ impl<T> RawVec<T, Global> {
     /// Aborts on OOM
     #[inline]
     pub fn with_capacity(cap: usize) -> Self {
-        RawVec::allocate_in(cap, false, Default::default())
+        RawVec::allocate_in(cap, false, Global)
     }
 
     /// Like `with_capacity` but guarantees the buffer is zeroed.
     #[inline]
     pub fn with_capacity_zeroed(cap: usize) -> Self {
-        RawVec::allocate_in(cap, true, Default::default())
+        RawVec::allocate_in(cap, true, Global)
     }
 }
-
 
 impl<T, A: Alloc> RawVec<T, A> {
     /// Reconstitutes a RawVec from a pointer, capacity, and allocator.
@@ -177,7 +177,11 @@ impl<T> RawVec<T, Global> {
     /// capacity cannot exceed `isize::MAX` (only a concern on 32-bit systems).
     /// If the ptr and capacity come from a RawVec, then this is guaranteed.
     pub unsafe fn from_raw_parts(ptr: *mut T, cap: usize) -> Self {
-        RawVec::from_raw_parts_in(ptr, cap, Global)
+        RawVec {
+            ptr: Unique::new_unchecked(ptr),
+            cap,
+            a: Global,
+        }
     }
 }
 
@@ -185,7 +189,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// Converts a `Box<[T], A>` into a `RawVec<T, A>`.
     pub fn from_box(mut slice: Box<[T], A>) -> Self {
         unsafe {
-            let a = ptr::read(&slice.a);
+            let a = ptr::read(&slice.1);
             let result = RawVec::from_raw_parts_in(slice.as_mut_ptr(), slice.len(), a);
             mem::forget(slice);
             result

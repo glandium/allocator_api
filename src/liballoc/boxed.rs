@@ -25,10 +25,7 @@ use crate::Unique;
 
 /// A pointer type for heap allocation.
 global_alloc! {
-    pub struct Box<T: ?Sized, A: Alloc> {
-        ptr: Unique<T>,
-        pub(crate) a: A,
-    }
+    pub struct Box<T: ?Sized, A: Alloc>(Unique<T>, pub(crate) A);
 }
 
 impl<T, A: Alloc> Box<T, A> {
@@ -63,10 +60,7 @@ impl<T, A: Alloc> Box<T, A> {
         unsafe {
             ptr::write(ptr.as_ptr() as *mut T, x);
         }
-        Box {
-            ptr: ptr.into(),
-            a: a,
-        }
+        Box(ptr.into(), a)
     }
 
     /// Constructs a new `Pin<Box<T>>`. If `T` does not implement `Unpin`, then
@@ -165,10 +159,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// ```
     #[inline]
     pub unsafe fn from_raw_in(raw: *mut T, a: A) -> Self {
-        Box {
-            ptr: Unique::new_unchecked(raw),
-            a: a,
-        }
+        Box(Unique::new_unchecked(raw), a)
     }
 
     /// Consumes the `Box`, returning a wrapped raw pointer.
@@ -240,7 +231,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     }
 
     pub(crate) fn into_unique(b: Box<T, A>) -> Unique<T> {
-        let ptr = b.ptr;
+        let ptr = b.0;
         mem::forget(b);
         ptr
     }
@@ -341,10 +332,10 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
 impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
     fn drop(&mut self) {
         unsafe {
-            let layout = Layout::for_value(self.ptr.as_ref());
-            ptr::drop_in_place(self.ptr.as_ptr());
+            let layout = Layout::for_value(self.0.as_ref());
+            ptr::drop_in_place(self.0.as_ptr());
             if layout.size() != 0 {
-                self.a.dealloc(NonNull::from(self.ptr).cast(), layout);
+                self.1.dealloc(NonNull::from(self.0).cast(), layout);
             }
         }
     }
@@ -361,8 +352,8 @@ impl<T, A: Alloc + Default> Default for Box<[T], A> {
     fn default() -> Box<[T], A> {
         let a = A::default();
         let b = Box::<[T; 0], A>::new_in([], a);
-        let raw = b.ptr.as_ptr();
-        let a = unsafe { ptr::read(&b.a) };
+        let raw = b.0.as_ptr();
+        let a = unsafe { ptr::read(&b.1) };
         mem::forget(b);
         unsafe { Box::from_raw_in(raw, a) }
     }
@@ -372,7 +363,7 @@ impl<T, A: Alloc + Default> Default for Box<[T], A> {
 /// that the string contains valid UTF-8.
 #[inline]
 pub unsafe fn from_boxed_utf8_unchecked<A: Alloc>(v: Box<[u8], A>) -> Box<str, A> {
-    let a = ptr::read(&v.a);
+    let a = ptr::read(&v.1);
     Box::from_raw_in(Box::into_raw(v) as *mut str, a)
 }
 
@@ -399,7 +390,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// ```
     #[inline]
     fn clone(&self) -> Box<T, A> {
-        Box::new_in((**self).clone(), self.a.clone())
+        Box::new_in((**self).clone(), self.1.clone())
     }
     /// Copies `source`'s contents into `self` without creating a new allocation.
     ///
@@ -428,7 +419,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
 impl<A: Alloc + Clone> Clone for Box<str, A> {
     fn clone(&self) -> Self {
         let len = self.len();
-        let buf = RawVec::with_capacity_in(len, self.a.clone());
+        let buf = RawVec::with_capacity_in(len, self.1.clone());
         unsafe {
             ptr::copy_nonoverlapping(self.as_ptr(), buf.ptr(), len);
             from_boxed_utf8_unchecked(buf.into_box())
@@ -640,7 +631,7 @@ impl<A: Alloc> From<Box<str, A>> for Box<[u8], A> {
     #[inline]
     fn from(s: Box<str, A>) -> Self {
         unsafe {
-            let a = ptr::read(&s.a);
+            let a = ptr::read(&s.1);
             Box::from_raw_in(Box::into_raw(s) as *mut [u8], a)
         }
     }
@@ -671,13 +662,13 @@ impl<T: ?Sized, A: Alloc> Deref for Box<T, A> {
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { self.ptr.as_ref() }
+        unsafe { self.0.as_ref() }
     }
 }
 
 impl<T: ?Sized, A: Alloc> DerefMut for Box<T, A> {
     fn deref_mut(&mut self) -> &mut T {
-        unsafe { self.ptr.as_mut() }
+        unsafe { self.0.as_mut() }
     }
 }
 
@@ -711,7 +702,7 @@ impl<I: FusedIterator + ?Sized, A: Alloc> FusedIterator for Box<I, A> {}
 impl<T: Clone, A: Alloc + Clone> Clone for Box<[T], A> {
     fn clone(&self) -> Self {
         let mut new = BoxBuilder {
-            data: RawVec::with_capacity_in(self.len(), self.a.clone()),
+            data: RawVec::with_capacity_in(self.len(), self.1.clone()),
             len: 0,
         };
 

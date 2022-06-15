@@ -169,7 +169,7 @@ impl fmt::Display for CannotReallocInPlace {
 ///   whether to return `Err`, or to return `Ok` with some pointer.
 ///
 /// * If an `Alloc` implementation chooses to return `Ok` in this
-///   case (i.e. the pointer denotes a zero-sized inaccessible block)
+///   case (i.e., the pointer denotes a zero-sized inaccessible block)
 ///   then that returned pointer must be considered "currently
 ///   allocated". On such an allocator, *all* methods that take
 ///   currently-allocated pointers as inputs must accept these
@@ -204,7 +204,7 @@ impl fmt::Display for CannotReallocInPlace {
 ///
 ///  * if a layout `k` fits a memory block (denoted by `ptr`)
 ///    currently allocated via an allocator `a`, then it is legal to
-///    use that layout to deallocate it, i.e. `a.dealloc(ptr, k);`.
+///    use that layout to deallocate it, i.e., `a.dealloc(ptr, k);`.
 ///
 /// # Safety
 ///
@@ -386,11 +386,11 @@ pub unsafe trait Alloc {
         let old_size = layout.size();
 
         if new_size >= old_size {
-            if let Ok(()) = self.grow_in_place(ptr, layout.clone(), new_size) {
+            if let Ok(()) = self.grow_in_place(ptr, layout, new_size) {
                 return Ok(ptr);
             }
         } else if new_size < old_size {
-            if let Ok(()) = self.shrink_in_place(ptr, layout.clone(), new_size) {
+            if let Ok(()) = self.shrink_in_place(ptr, layout, new_size) {
                 return Ok(ptr);
             }
         }
