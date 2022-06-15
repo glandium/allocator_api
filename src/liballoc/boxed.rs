@@ -247,14 +247,12 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # test_using_global! {
     /// use allocator_api::Box;
     ///
-    /// fn main() {
-    ///     let x = Box::new(5);
-    ///     let ptr = Box::into_raw_non_null(x);
+    /// let x = Box::new(5);
+    /// let ptr = Box::into_raw_non_null(x);
     ///
-    ///     // Clean up the memory by converting the NonNull pointer back
-    ///     // into a Box and letting the Box be dropped.
-    ///     let x = unsafe { Box::from_raw(ptr.as_ptr()) };
-    /// }
+    /// // Clean up the memory by converting the NonNull pointer back
+    /// // into a Box and letting the Box be dropped.
+    /// let x = unsafe { Box::from_raw(ptr.as_ptr()) };
     /// # }
     /// ```
     #[inline]
@@ -294,12 +292,10 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// fn main() {
-    ///     let x = Box::new(41);
-    ///     let static_ref: &'static mut usize = Box::leak(x);
-    ///     *static_ref += 1;
-    ///     assert_eq!(*static_ref, 42);
-    /// }
+    /// let x = Box::new(41);
+    /// let static_ref: &'static mut usize = Box::leak(x);
+    /// *static_ref += 1;
+    /// assert_eq!(*static_ref, 42);
     /// # }
     /// ```
     ///
@@ -326,18 +322,16 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     ///         self.len += 1;
     ///     }
     /// }
-    /// fn main() {
-    ///     //let x = vec![1, 2, 3].into_boxed_slice();
-    ///     let mut v = MyVec { buf: RawVec::new(), len: 0 };
-    ///     v.push(1);
-    ///     v.push(2);
-    ///     v.push(3);
-    ///     v.buf.shrink_to_fit(v.len);
-    ///     let x = unsafe { v.buf.into_box() };
-    ///     let static_ref = Box::leak(x);
-    ///     static_ref[0] = 4;
-    ///     assert_eq!(*static_ref, [4, 2, 3]);
-    /// }
+    /// //let x = vec![1, 2, 3].into_boxed_slice();
+    /// let mut v = MyVec { buf: RawVec::new(), len: 0 };
+    /// v.push(1);
+    /// v.push(2);
+    /// v.push(3);
+    /// v.buf.shrink_to_fit(v.len);
+    /// let x = unsafe { v.buf.into_box() };
+    /// let static_ref = Box::leak(x);
+    /// static_ref[0] = 4;
+    /// assert_eq!(*static_ref, [4, 2, 3]);
     /// # }
     /// ```
     #[inline]
