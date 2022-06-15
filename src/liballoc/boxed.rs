@@ -7,7 +7,7 @@
 
 use core::borrow;
 use core::cmp::Ordering;
-use core::convert::From;
+use core::convert::{From, TryFrom};
 use core::fmt;
 use core::future::Future;
 use core::hash::{Hash, Hasher};
@@ -317,7 +317,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     ///
     /// impl<T> MyVec<T> {
     ///     pub fn push(&mut self, elem: T) {
-    ///         if self.len == self.buf.cap() { self.buf.double(); }
+    ///         if self.len == self.buf.capacity() { self.buf.double(); }
     ///         // double would have aborted or panicked if the len exceeded
     ///         // `isize::MAX` so this is safe to do unchecked now.
     ///         unsafe {
@@ -416,12 +416,19 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// use allocator_api::Box;
     /// let x = Box::new(5);
     /// let y = x.clone();
+    ///
+    /// // The value is the same
+    /// assert_eq!(x, y);
+    ///
+    /// // But they are unique objects
+    /// assert_ne!(&*x as *const i32, &*y as *const i32);
     /// # }
     /// ```
     #[inline]
     fn clone(&self) -> Box<T, A> {
         Box::new_in((**self).clone(), self.1.clone())
     }
+
     /// Copies `source`'s contents into `self` without creating a new allocation.
     ///
     /// # Examples
@@ -432,10 +439,15 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// use allocator_api::Box;
     /// let x = Box::new(5);
     /// let mut y = Box::new(10);
+    /// let yp: *const i32 = &*y;
     ///
     /// y.clone_from(&x);
     ///
-    /// assert_eq!(*y, 5);
+    /// // The value is the same
+    /// assert_eq!(x, y);
+    ///
+    /// // And no allocation occurred
+    /// assert_eq!(yp, &*y);
     /// # }
     /// ```
     #[inline]
@@ -656,6 +668,18 @@ impl<A: Alloc> From<Box<str, A>> for Box<[u8], A> {
         unsafe {
             let a = ptr::read(&s.1);
             Box::from_raw_in(Box::into_raw(s) as *mut [u8], a)
+        }
+    }
+}
+
+impl<T, const N: usize> TryFrom<Box<[T]>> for Box<[T; N]> {
+    type Error = Box<[T]>;
+
+    fn try_from(boxed_slice: Box<[T]>) -> Result<Self, Self::Error> {
+        if boxed_slice.len() == N {
+            Ok(unsafe { Box::from_raw(Box::into_raw(boxed_slice) as *mut [T; N]) })
+        } else {
+            Err(boxed_slice)
         }
     }
 }
