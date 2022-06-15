@@ -103,25 +103,40 @@ impl<T: ?Sized> Box<T> {
     ///
     /// After calling this function, the raw pointer is owned by the
     /// resulting `Box`. Specifically, the `Box` destructor will call
-    /// the destructor of `T` and free the allocated memory. Since the
-    /// way `Box` allocates and releases memory is unspecified, the
-    /// only valid pointer to pass to this function is the one taken
-    /// from another `Box` via the [`Box::into_raw`] function.
+    /// the destructor of `T` and free the allocated memory. For this
+    /// to be safe, the memory must have been allocated in accordance
+    /// with the [memory layout] used by `Box` .
+    ///
+    /// # Safety
     ///
     /// This function is unsafe because improper use may lead to
     /// memory problems. For example, a double-free may occur if the
     /// function is called twice on the same raw pointer.
     ///
-    /// [`Box::into_raw`]: struct.Box.html#method.into_raw
-    ///
     /// # Examples
-    ///
+    /// Recreate a `Box` which was previously converted to a raw pointer
+    /// using [`Box::into_raw`]:
     /// ```
     /// use allocator_api::Box;
     /// let x = Box::new(5);
     /// let ptr = Box::into_raw(x);
     /// let x = unsafe { Box::from_raw(ptr) };
     /// ```
+    /// Manually create a `Box` from scratch by using the global allocator:
+    /// ```
+    /// use allocator_api::Box;
+    /// use std::alloc::{alloc, Layout};
+    ///
+    /// unsafe {
+    ///     let ptr = alloc(Layout::new::<i32>()) as *mut i32;
+    ///     *ptr = 5;
+    ///     let x = Box::from_raw(ptr);
+    /// }
+    /// ```
+    ///
+    /// [memory layout]: https://doc.rust-lang.org/std/boxed/index.html#memory-layout
+    /// [`Layout`]: ../alloc/struct.Layout.html
+    /// [`Box::into_raw`]: struct.Box.html#method.into_raw
     #[inline]
     pub unsafe fn from_raw(raw: *mut T) -> Self {
         Box::from_raw_in(raw, Global)
@@ -162,27 +177,48 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     ///
     /// After calling this function, the caller is responsible for the
     /// memory previously managed by the `Box`. In particular, the
-    /// caller should properly destroy `T` and release the memory. The
-    /// proper way to do so is to convert the raw pointer back into a
-    /// `Box` with the [`Box::from_raw`] or the [`Box::from_raw_in`]
-    /// functions, with the appropriate allocator.
+    /// caller should properly destroy `T` and release the memory, taking
+    /// into account the [memory layout] used by `Box`. The easiest way to
+    /// do this is to convert the raw pointer back into a `Box` with the
+    /// [`Box::from_raw`] function, allowing the `Box` destructor to perform
+    /// the cleanup.
     ///
     /// Note: this is an associated function, which means that you have
     /// to call it as `Box::into_raw(b)` instead of `b.into_raw()`. This
     /// is so that there is no conflict with a method on the inner type.
     ///
-    /// [`Box::from_raw`]: struct.Box.html#method.from_raw
-    ///
     /// # Examples
-    ///
+    /// Converting the raw pointer back into a `Box` with [`Box::from_raw`]
+    /// for automatic cleanup:
     /// ```
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// let x = Box::new(5);
+    /// let x = Box::new(String::from("Hello"));
     /// let ptr = Box::into_raw(x);
+    /// let x = unsafe { Box::from_raw(ptr) };
     /// # }
     /// ```
+    /// Manual cleanup by explicitly running the destructor and deallocating
+    /// the memory:
+    /// ```
+    /// # #[macro_use] extern crate allocator_api;
+    /// # test_using_global! {
+    /// use std::alloc::{dealloc, Layout};
+    /// use std::ptr;
+    /// use allocator_api::Box;
+    ///
+    /// let x = Box::new(String::from("Hello"));
+    /// let p = Box::into_raw(x);
+    /// unsafe {
+    ///     ptr::drop_in_place(p);
+    ///     dealloc(p as *mut u8, Layout::new::<String>());
+    /// }
+    /// # }
+    /// ```
+    ///
+    /// [memory layout]: https://doc.rust-lang.org/std/boxed/index.html#memory-layout
+    /// [`Box::from_raw`]: struct.Box.html#method.from_raw
     #[inline]
     pub fn into_raw(b: Box<T, A>) -> *mut T {
         Box::into_raw_non_null(b).as_ptr()
@@ -193,7 +229,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// After calling this function, the caller is responsible for the
     /// memory previously managed by the `Box`. In particular, the
     /// caller should properly destroy `T` and release the memory. The
-    /// proper way to do so is to convert the `NonNull<T>` pointer
+    /// easiest way to do so is to convert the `NonNull<T>` pointer
     /// into a raw pointer and back into a `Box` with the [`Box::from_raw`]
     /// function.
     ///
@@ -214,6 +250,10 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// fn main() {
     ///     let x = Box::new(5);
     ///     let ptr = Box::into_raw_non_null(x);
+    ///
+    ///     // Clean up the memory by converting the NonNull pointer back
+    ///     // into a Box and letting the Box be dropped.
+    ///     let x = unsafe { Box::from_raw(ptr.as_ptr()) };
     /// }
     /// # }
     /// ```
@@ -559,10 +599,13 @@ impl<T: Copy, A: Alloc + Default> From<&[T]> for Box<[T], A> {
     /// # }
     /// ```
     fn from(slice: &[T]) -> Box<[T], A> {
+        let len = slice.len();
         let a = Default::default();
-        let mut boxed = unsafe { RawVec::with_capacity_in(slice.len(), a).into_box() };
-        boxed.copy_from_slice(slice);
-        boxed
+        let buf = RawVec::with_capacity_in(len, a);
+        unsafe {
+            ptr::copy_nonoverlapping(slice.as_ptr(), buf.ptr(), len);
+            buf.into_box()
+        }
     }
 }
 
