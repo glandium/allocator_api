@@ -1,27 +1,26 @@
 //! Collection types.
 
-use crate::alloc::{AllocErr, LayoutErr};
+use crate::alloc::{Layout, LayoutErr};
 
-/// Augments `AllocErr` with a CapacityOverflow variant.
+/// The error type for `try_reserve` methods.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum CollectionAllocErr {
+pub enum TryReserveError {
     /// Error due to the computed capacity exceeding the collection's maximum
     /// (usually `isize::MAX` bytes).
     CapacityOverflow,
-    /// Error due to the allocator (see the `AllocErr` type's docs).
-    AllocErr,
+    /// The memory allocator returned an error
+    AllocError {
+        /// The layout of allocation request that failed
+        layout: Layout,
+
+        #[doc(hidden)]
+        non_exhaustive: (),
+    },
 }
 
-impl From<AllocErr> for CollectionAllocErr {
-    #[inline]
-    fn from(AllocErr: AllocErr) -> Self {
-        CollectionAllocErr::AllocErr
-    }
-}
-
-impl From<LayoutErr> for CollectionAllocErr {
+impl From<LayoutErr> for TryReserveError {
     #[inline]
     fn from(_: LayoutErr) -> Self {
-        CollectionAllocErr::CapacityOverflow
+        TryReserveError::CapacityOverflow
     }
 }

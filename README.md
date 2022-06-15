@@ -8,7 +8,7 @@ Usable with stable rust, but requires 1.61.
 
 ## Differences with nightly rust
 
-The code was copied from the rust code as of 1.38.0
+The code was copied from the rust code as of 1.39.0
 with #[stable] annotations and #[unstable] implementations removed.
 
 In the alloc module (corresponding to parts of both core::alloc and
