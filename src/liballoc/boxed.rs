@@ -11,26 +11,26 @@ use core::convert::{From, TryFrom};
 use core::fmt;
 use core::future::Future;
 use core::hash::{Hash, Hasher};
-use core::iter::{Iterator, FusedIterator};
+use core::iter::{FusedIterator, Iterator};
 use core::marker::Unpin;
 use core::mem;
-use core::pin::Pin;
 use core::ops::{Deref, DerefMut};
+use core::pin::Pin;
 use core::ptr::{self, NonNull};
 use core::task::{Context, Poll};
 
-use crate::alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
 use crate::alloc::Global;
+use crate::alloc::{handle_alloc_error, AllocRef, Layout};
 use crate::raw_vec::RawVec;
 use crate::Unique;
 
 /// A pointer type for heap allocation.
 global_alloc! {
-    pub struct Box<T: ?Sized, A: Alloc>(Unique<T>, pub(crate) A);
+    pub struct Box<T: ?Sized, A: AllocRef>(Unique<T>, pub(crate) A);
 }
 
-impl<T, A: Alloc> Box<T, A> {
+impl<T, A: AllocRef> Box<T, A> {
     /// Allocates memory in the given allocator and then places `x` into it.
     ///
     /// This doesn't actually allocate if `T` is zero-sized.
@@ -52,10 +52,10 @@ impl<T, A: Alloc> Box<T, A> {
         let ptr = if size == 0 {
             NonNull::dangling()
         } else {
-            unsafe {
-                let ptr = a.alloc(layout).unwrap_or_else(|_| { handle_alloc_error(layout) });
-                ptr.cast()
-            }
+            let (ptr, _) = a
+                .alloc(layout)
+                .unwrap_or_else(|_| handle_alloc_error(layout));
+            ptr.cast()
         };
         unsafe {
             ptr::write(ptr.as_ptr() as *mut T, x);
@@ -69,7 +69,6 @@ impl<T, A: Alloc> Box<T, A> {
     pub fn pin_in(x: T, a: A) -> Pin<Box<T, A>> {
         Box::new_in(x, a).into()
     }
-
 }
 
 #[cfg(feature = "std")]
@@ -143,7 +142,7 @@ impl<T: ?Sized> Box<T> {
     }
 }
 
-impl<T: ?Sized, A: Alloc> Box<T, A> {
+impl<T: ?Sized, A: AllocRef> Box<T, A> {
     /// Constructs a box from a raw pointer in the given allocator.
     ///
     /// This is similar to the [`Box::from_raw`] function, but assumes
@@ -337,7 +336,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     #[inline]
     pub fn leak<'a>(b: Box<T, A>) -> &'a mut T
     where
-        T: 'a // Technically not needed, but kept to be explicit.
+        T: 'a, // Technically not needed, but kept to be explicit.
     {
         unsafe { &mut *Box::into_raw(b) }
     }
@@ -355,7 +354,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     }
 }
 
-impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> Drop for Box<T, A> {
     fn drop(&mut self) {
         unsafe {
             let layout = Layout::for_value(self.0.as_ref());
@@ -367,14 +366,14 @@ impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
     }
 }
 
-impl<T: Default, A: Alloc + Default> Default for Box<T, A> {
+impl<T: Default, A: AllocRef + Default> Default for Box<T, A> {
     /// Creates a `Box<T>`, with the `Default` value for T.
     fn default() -> Box<T, A> {
         Box::new_in(Default::default(), Default::default())
     }
 }
 
-impl<T, A: Alloc + Default> Default for Box<[T], A> {
+impl<T, A: AllocRef + Default> Default for Box<[T], A> {
     fn default() -> Box<[T], A> {
         let a = A::default();
         let b = Box::<[T; 0], A>::new_in([], a);
@@ -388,18 +387,18 @@ impl<T, A: Alloc + Default> Default for Box<[T], A> {
 /// Converts a boxed slice of bytes to a boxed string slice without checking
 /// that the string contains valid UTF-8.
 #[inline]
-pub unsafe fn from_boxed_utf8_unchecked<A: Alloc>(v: Box<[u8], A>) -> Box<str, A> {
+pub unsafe fn from_boxed_utf8_unchecked<A: AllocRef>(v: Box<[u8], A>) -> Box<str, A> {
     let a = ptr::read(&v.1);
     Box::from_raw_in(Box::into_raw(v) as *mut str, a)
 }
 
-impl<A: Alloc + Default> Default for Box<str, A> {
+impl<A: AllocRef + Default> Default for Box<str, A> {
     fn default() -> Box<str, A> {
         unsafe { from_boxed_utf8_unchecked(Default::default()) }
     }
 }
 
-impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
+impl<T: Clone, A: AllocRef + Clone> Clone for Box<T, A> {
     /// Returns a new box with a `clone()` of this box's contents.
     ///
     /// # Examples
@@ -450,7 +449,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     }
 }
 
-impl<A: Alloc + Clone> Clone for Box<str, A> {
+impl<A: AllocRef + Clone> Clone for Box<str, A> {
     fn clone(&self) -> Self {
         let len = self.len();
         let buf = RawVec::with_capacity_in(len, self.1.clone());
@@ -461,7 +460,7 @@ impl<A: Alloc + Clone> Clone for Box<str, A> {
     }
 }
 
-impl<T: ?Sized + PartialEq, A: Alloc> PartialEq for Box<T, A> {
+impl<T: ?Sized + PartialEq, A: AllocRef> PartialEq for Box<T, A> {
     #[inline]
     fn eq(&self, other: &Box<T, A>) -> bool {
         PartialEq::eq(&**self, &**other)
@@ -472,7 +471,7 @@ impl<T: ?Sized + PartialEq, A: Alloc> PartialEq for Box<T, A> {
     }
 }
 
-impl<T: ?Sized + PartialOrd, A: Alloc> PartialOrd for Box<T, A> {
+impl<T: ?Sized + PartialOrd, A: AllocRef> PartialOrd for Box<T, A> {
     #[inline]
     fn partial_cmp(&self, other: &Box<T, A>) -> Option<Ordering> {
         PartialOrd::partial_cmp(&**self, &**other)
@@ -495,22 +494,22 @@ impl<T: ?Sized + PartialOrd, A: Alloc> PartialOrd for Box<T, A> {
     }
 }
 
-impl<T: ?Sized + Ord, A: Alloc> Ord for Box<T, A> {
+impl<T: ?Sized + Ord, A: AllocRef> Ord for Box<T, A> {
     #[inline]
     fn cmp(&self, other: &Box<T, A>) -> Ordering {
         Ord::cmp(&**self, &**other)
     }
 }
 
-impl<T: ?Sized + Eq, A: Alloc> Eq for Box<T, A> {}
+impl<T: ?Sized + Eq, A: AllocRef> Eq for Box<T, A> {}
 
-impl<T: ?Sized + Hash, A: Alloc> Hash for Box<T, A> {
+impl<T: ?Sized + Hash, A: AllocRef> Hash for Box<T, A> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         (**self).hash(state);
     }
 }
 
-impl<T: ?Sized + Hasher, A: Alloc> Hasher for Box<T, A> {
+impl<T: ?Sized + Hasher, A: AllocRef> Hasher for Box<T, A> {
     fn finish(&self) -> u64 {
         (**self).finish()
     }
@@ -555,7 +554,7 @@ impl<T: ?Sized + Hasher, A: Alloc> Hasher for Box<T, A> {
     }
 }
 
-impl<T, A: Alloc + Default> From<T> for Box<T, A> {
+impl<T, A: AllocRef + Default> From<T> for Box<T, A> {
     /// Converts a generic type `T` into a `Box<T, A>`
     ///
     /// The conversion allocates with the associated allocator and moves `t`
@@ -577,7 +576,7 @@ impl<T, A: Alloc + Default> From<T> for Box<T, A> {
     }
 }
 
-impl<T: ?Sized, A: Alloc> From<Box<T, A>> for Pin<Box<T, A>> {
+impl<T: ?Sized, A: AllocRef> From<Box<T, A>> for Pin<Box<T, A>> {
     /// Converts a `Box<T, A>` into a `Pin<Box<T, A>>`
     ///
     /// This conversion does not allocate and happens in place.
@@ -586,7 +585,7 @@ impl<T: ?Sized, A: Alloc> From<Box<T, A>> for Pin<Box<T, A>> {
     }
 }
 
-impl<T: Copy, A: Alloc + Default> From<&[T]> for Box<[T], A> {
+impl<T: Copy, A: AllocRef + Default> From<&[T]> for Box<[T], A> {
     /// Converts a `&[T]` into a `Box<[T], A>`
     ///
     /// This conversion allocates with the associated allocator
@@ -615,7 +614,7 @@ impl<T: Copy, A: Alloc + Default> From<&[T]> for Box<[T], A> {
     }
 }
 
-impl<A: Alloc + Default> From<&str> for Box<str, A> {
+impl<A: AllocRef + Default> From<&str> for Box<str, A> {
     /// Converts a `&str` into a `Box<str, A>`
     ///
     /// This conversion allocates with the associated allocator
@@ -636,7 +635,7 @@ impl<A: Alloc + Default> From<&str> for Box<str, A> {
     }
 }
 
-impl<A: Alloc> From<Box<str, A>> for Box<[u8], A> {
+impl<A: AllocRef> From<Box<str, A>> for Box<[u8], A> {
     /// Converts a `Box<str, A>` into a `Box<[u8], A>`
     ///
     /// This conversion does not allocate on the heap and happens in place.
@@ -678,19 +677,19 @@ impl<T, const N: usize> TryFrom<Box<[T]>> for Box<[T; N]> {
     }
 }
 
-impl<T: fmt::Display + ?Sized, A: Alloc> fmt::Display for Box<T, A> {
+impl<T: fmt::Display + ?Sized, A: AllocRef> fmt::Display for Box<T, A> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&**self, f)
     }
 }
 
-impl<T: fmt::Debug + ?Sized, A: Alloc> fmt::Debug for Box<T, A> {
+impl<T: fmt::Debug + ?Sized, A: AllocRef> fmt::Debug for Box<T, A> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(&**self, f)
     }
 }
 
-impl<T: ?Sized, A: Alloc> fmt::Pointer for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> fmt::Pointer for Box<T, A> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // It's not possible to extract the inner Uniq directly from the Box,
         // instead we cast it to a *const which aliases the Unique
@@ -699,7 +698,7 @@ impl<T: ?Sized, A: Alloc> fmt::Pointer for Box<T, A> {
     }
 }
 
-impl<T: ?Sized, A: Alloc> Deref for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> Deref for Box<T, A> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -707,13 +706,13 @@ impl<T: ?Sized, A: Alloc> Deref for Box<T, A> {
     }
 }
 
-impl<T: ?Sized, A: Alloc> DerefMut for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> DerefMut for Box<T, A> {
     fn deref_mut(&mut self) -> &mut T {
         unsafe { self.0.as_mut() }
     }
 }
 
-impl<I: Iterator + ?Sized, A: Alloc> Iterator for Box<I, A> {
+impl<I: Iterator + ?Sized, A: AllocRef> Iterator for Box<I, A> {
     type Item = I::Item;
     fn next(&mut self) -> Option<I::Item> {
         (**self).next()
@@ -726,7 +725,7 @@ impl<I: Iterator + ?Sized, A: Alloc> Iterator for Box<I, A> {
     }
 }
 
-impl<I: DoubleEndedIterator + ?Sized, A: Alloc> DoubleEndedIterator for Box<I, A> {
+impl<I: DoubleEndedIterator + ?Sized, A: AllocRef> DoubleEndedIterator for Box<I, A> {
     fn next_back(&mut self) -> Option<I::Item> {
         (**self).next_back()
     }
@@ -735,15 +734,15 @@ impl<I: DoubleEndedIterator + ?Sized, A: Alloc> DoubleEndedIterator for Box<I, A
     }
 }
 
-impl<I: ExactSizeIterator + ?Sized, A: Alloc> ExactSizeIterator for Box<I, A> {
+impl<I: ExactSizeIterator + ?Sized, A: AllocRef> ExactSizeIterator for Box<I, A> {
     fn len(&self) -> usize {
         (**self).len()
     }
 }
 
-impl<I: FusedIterator + ?Sized, A: Alloc> FusedIterator for Box<I, A> {}
+impl<I: FusedIterator + ?Sized, A: AllocRef> FusedIterator for Box<I, A> {}
 
-impl<T: Clone, A: Alloc + Clone> Clone for Box<[T], A> {
+impl<T: Clone, A: AllocRef + Clone> Clone for Box<[T], A> {
     fn clone(&self) -> Self {
         let mut new = BoxBuilder {
             data: RawVec::with_capacity_in(self.len(), self.1.clone()),
@@ -764,12 +763,12 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<[T], A> {
         return unsafe { new.into_box() };
 
         // Helper type for responding to panics correctly.
-        struct BoxBuilder<T, A: Alloc> {
+        struct BoxBuilder<T, A: AllocRef> {
             data: RawVec<T, A>,
             len: usize,
         }
 
-        impl<T, A: Alloc> BoxBuilder<T, A> {
+        impl<T, A: AllocRef> BoxBuilder<T, A> {
             unsafe fn into_box(self) -> Box<[T], A> {
                 let raw = ptr::read(&self.data);
                 mem::forget(self);
@@ -777,7 +776,7 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<[T], A> {
             }
         }
 
-        impl<T, A: Alloc> Drop for BoxBuilder<T, A> {
+        impl<T, A: AllocRef> Drop for BoxBuilder<T, A> {
             fn drop(&mut self) {
                 let mut data = self.data.ptr();
                 let max = unsafe { data.add(self.len) };
@@ -793,25 +792,25 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<[T], A> {
     }
 }
 
-impl<T: ?Sized, A: Alloc> borrow::Borrow<T> for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> borrow::Borrow<T> for Box<T, A> {
     fn borrow(&self) -> &T {
         &**self
     }
 }
 
-impl<T: ?Sized, A: Alloc> borrow::BorrowMut<T> for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> borrow::BorrowMut<T> for Box<T, A> {
     fn borrow_mut(&mut self) -> &mut T {
         &mut **self
     }
 }
 
-impl<T: ?Sized, A: Alloc> AsRef<T> for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> AsRef<T> for Box<T, A> {
     fn as_ref(&self) -> &T {
         &**self
     }
 }
 
-impl<T: ?Sized, A: Alloc> AsMut<T> for Box<T, A> {
+impl<T: ?Sized, A: AllocRef> AsMut<T> for Box<T, A> {
     fn as_mut(&mut self) -> &mut T {
         &mut **self
     }
@@ -839,9 +838,9 @@ impl<T: ?Sized, A: Alloc> AsMut<T> for Box<T, A> {
  *  implementation of `Unpin` (where `T: Unpin`) would be valid/safe, and
  *  could have a method to project a Pin<T> from it.
  */
-impl<T: ?Sized, A: Alloc> Unpin for Box<T, A> { }
+impl<T: ?Sized, A: AllocRef> Unpin for Box<T, A> {}
 
-impl<F: ?Sized + Future + Unpin, A: Alloc> Future for Box<F, A> {
+impl<F: ?Sized + Future + Unpin, A: AllocRef> Future for Box<F, A> {
     type Output = F::Output;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
