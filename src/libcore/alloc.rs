@@ -118,7 +118,7 @@ pub struct AllocErr;
 
 // (we need this for downstream impl of trait Error)
 impl fmt::Display for AllocErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("memory allocation failed")
     }
 }
@@ -137,7 +137,7 @@ impl CannotReallocInPlace {
 
 // (we need this for downstream impl of trait Error)
 impl fmt::Display for CannotReallocInPlace {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }

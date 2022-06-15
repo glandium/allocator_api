@@ -9,6 +9,7 @@ use core::borrow;
 use core::cmp::Ordering;
 use core::convert::From;
 use core::fmt;
+use core::future::Future;
 use core::hash::{Hash, Hasher};
 use core::iter::{Iterator, FusedIterator};
 use core::marker::Unpin;
@@ -16,6 +17,7 @@ use core::mem;
 use core::pin::Pin;
 use core::ops::{Deref, DerefMut};
 use core::ptr::{self, NonNull};
+use core::task::{Context, Poll};
 
 use crate::alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
@@ -777,3 +779,11 @@ impl<T: ?Sized, A: Alloc> AsMut<T> for Box<T, A> {
  *  could have a method to project a Pin<T> from it.
  */
 impl<T: ?Sized, A: Alloc> Unpin for Box<T, A> { }
+
+impl<F: ?Sized + Future + Unpin, A: Alloc> Future for Box<F, A> {
+    type Output = F::Output;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        F::poll(Pin::new(&mut *self), cx)
+    }
+}

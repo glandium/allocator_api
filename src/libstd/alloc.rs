@@ -18,6 +18,9 @@ static HOOK: AtomicPtr<()> = AtomicPtr::new(ptr::null_mut());
 /// about the allocation that failed.
 ///
 /// The allocation error hook is a global resource.
+///
+/// [`set_alloc_error_hook`]: fn.set_alloc_error_hook.html
+/// [`take_alloc_error_hook`]: fn.take_alloc_error_hook.html
 pub fn set_alloc_error_hook(hook: fn(Layout)) {
     HOOK.store(hook as *mut (), Ordering::SeqCst);
 }
@@ -27,6 +30,8 @@ pub fn set_alloc_error_hook(hook: fn(Layout)) {
 /// *See also the function [`set_alloc_error_hook`].*
 ///
 /// If no custom hook is registered, the default hook will be returned.
+///
+/// [`set_alloc_error_hook`]: fn.set_alloc_error_hook.html
 pub fn take_alloc_error_hook() -> fn(Layout) {
     let hook = HOOK.swap(ptr::null_mut(), Ordering::SeqCst);
     if hook.is_null() {
