@@ -39,9 +39,7 @@ impl<T, A: Alloc> Box<T, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::{Box, Global};
-    /// # fn main() {
     /// let five = Box::new_in(5, Global);
-    /// # }
     /// # }
     /// ```
     #[inline(always)]
@@ -82,9 +80,7 @@ impl<T> Box<T> {
     ///
     /// ```
     /// use allocator_api::Box;
-    /// # fn main() {
     /// let five = Box::new(5);
-    /// # }
     /// ```
     #[inline(always)]
     pub fn new(x: T) -> Box<T> {
@@ -120,11 +116,9 @@ impl<T: ?Sized> Box<T> {
     ///
     /// ```
     /// use allocator_api::Box;
-    /// # fn main() {
     /// let x = Box::new(5);
     /// let ptr = Box::into_raw(x);
     /// let x = unsafe { Box::from_raw(ptr) };
-    /// # }
     /// ```
     #[inline]
     pub unsafe fn from_raw(raw: *mut T) -> Self {
@@ -150,11 +144,9 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::{Box, Global};
-    /// # fn main() {
     /// let x = Box::new_in(5, Global);
     /// let ptr = Box::into_raw(x);
     /// let x = unsafe { Box::from_raw_in(ptr, Global) };
-    /// # }
     /// # }
     /// ```
     #[inline]
@@ -185,10 +177,8 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # fn main() {
     /// let x = Box::new(5);
     /// let ptr = Box::into_raw(x);
-    /// # }
     /// # }
     /// ```
     #[inline]
@@ -382,10 +372,8 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # fn main() {
     /// let x = Box::new(5);
     /// let y = x.clone();
-    /// # }
     /// # }
     /// ```
     #[inline]
@@ -400,14 +388,12 @@ impl<T: Clone, A: Alloc + Clone> Clone for Box<T, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # fn main() {
     /// let x = Box::new(5);
     /// let mut y = Box::new(10);
     ///
     /// y.clone_from(&x);
     ///
     /// assert_eq!(*y, 5);
-    /// # }
     /// # }
     /// ```
     #[inline]
@@ -532,12 +518,10 @@ impl<T, A: Alloc + Default> From<T> for Box<T, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # fn main() {
     /// let x = 5;
     /// let boxed = Box::new(5);
     ///
     /// assert_eq!(Box::from(x), boxed);
-    /// # }
     /// # }
     /// ```
     fn from(t: T) -> Self {
@@ -565,13 +549,11 @@ impl<'a, T: Copy, A: Alloc + Default> From<&'a [T]> for Box<[T], A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # fn main() {
     /// // create a &[u8] which will be used to create a Box<[u8]>
     /// let slice: &[u8] = &[104, 101, 108, 108, 111];
     /// let boxed_slice: Box<[u8]> = Box::from(slice);
     ///
     /// println!("{:?}", boxed_slice);
-    /// # }
     /// # }
     /// ```
     fn from(slice: &'a [T]) -> Box<[T], A> {
@@ -593,10 +575,8 @@ impl<'a, A: Alloc + Default> From<&'a str> for Box<str, A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # fn main() {
     /// let boxed: Box<str> = Box::from("hello");
     /// println!("{}", boxed);
-    /// # }
     /// # }
     /// ```
     #[inline]
@@ -615,7 +595,6 @@ impl<A: Alloc> From<Box<str, A>> for Box<[u8], A> {
     /// # #[macro_use] extern crate allocator_api;
     /// # test_using_global! {
     /// use allocator_api::Box;
-    /// # fn main() {
     /// // create a Box<str> which will be used to create a Box<[u8]>
     /// let boxed: Box<str> = Box::from("hello");
     /// let boxed_str: Box<[u8]> = Box::from(boxed);
@@ -625,7 +604,6 @@ impl<A: Alloc> From<Box<str, A>> for Box<[u8], A> {
     /// let boxed_slice = Box::from(slice);
     ///
     /// assert_eq!(boxed_slice, boxed_str);
-    /// # }
     /// # }
     /// ```
     #[inline]
