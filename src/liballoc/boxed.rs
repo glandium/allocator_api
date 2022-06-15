@@ -665,12 +665,18 @@ impl<A: AllocRef> From<Box<str, A>> for Box<[u8], A> {
     }
 }
 
-impl<T, const N: usize> TryFrom<Box<[T]>> for Box<[T; N]> {
-    type Error = Box<[T]>;
+impl<T, A: AllocRef, const N: usize> TryFrom<Box<[T], A>> for Box<[T; N], A> {
+    type Error = Box<[T], A>;
 
-    fn try_from(boxed_slice: Box<[T]>) -> Result<Self, Self::Error> {
+    fn try_from(boxed_slice: Box<[T], A>) -> Result<Self, Self::Error> {
         if boxed_slice.len() == N {
-            Ok(unsafe { Box::from_raw(Box::into_raw(boxed_slice) as *mut [T; N]) })
+            unsafe {
+                let a = ptr::read(&boxed_slice.1);
+                Ok(Box::from_raw_in(
+                    Box::into_raw(boxed_slice) as *mut [T; N],
+                    a,
+                ))
+            }
         } else {
             Err(boxed_slice)
         }
