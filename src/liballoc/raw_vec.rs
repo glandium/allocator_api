@@ -1,5 +1,4 @@
 use core::cmp;
-use core::marker::PhantomData;
 use core::mem;
 use core::ops::Drop;
 use core::ptr::{self, NonNull};
@@ -11,20 +10,21 @@ use crate::alloc::Global;
 use crate::collections::CollectionAllocErr;
 use crate::collections::CollectionAllocErr::*;
 use crate::boxed::Box;
+use crate::Unique;
 
 /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
 /// a buffer of memory on the heap without having to worry about all the corner cases
 /// involved. This type is excellent for building your own data structures like Vec and VecDeque.
 /// In particular:
 ///
-/// * Produces NonNull::dangling() on zero-sized types
-/// * Produces NonNull::dangling() on zero-length allocations
+/// * Produces Unique::empty() on zero-sized types
+/// * Produces Unique::empty() on zero-length allocations
 /// * Catches all overflows in capacity computations (promotes them to "capacity overflow" panics)
 /// * Guards against 32-bit systems allocating more than isize::MAX bytes
 /// * Guards against overflowing your length
 /// * Aborts on OOM or calls handle_alloc_error as applicable
-/// * Avoids freeing NonNull::dangling()
-/// * Contains a ptr::NonNull and thus endows the user with all related benefits
+/// * Avoids freeing Unique::empty()
+/// * Contains a ptr::Unique and thus endows the user with all related benefits
 ///
 /// This type does not in anyway inspect the memory that it manages. When dropped it *will*
 /// free its memory, but it *won't* try to Drop its contents. It is up to the user of RawVec
@@ -42,8 +42,7 @@ use crate::boxed::Box;
 #[allow(missing_debug_implementations)]
 global_alloc! {
     pub struct RawVec<T, A: Alloc> {
-        ptr: NonNull<T>,
-        marker: PhantomData<T>,
+        ptr: Unique<T>,
         cap: usize,
         a: A,
     }
@@ -56,10 +55,9 @@ impl<T, A: Alloc> RawVec<T, A> {
         // FIXME(mark-i-m): use this line when `if`s are allowed in `const`
         //let cap = if mem::size_of::<T>() == 0 { !0 } else { 0 };
 
-        // NonNull::dangling() doubles as "unallocated" and "zero-sized allocation"
+        // Unique::empty() doubles as "unallocated" and "zero-sized allocation"
         RawVec {
-            ptr: NonNull::dangling(),
-            marker: PhantomData,
+            ptr: Unique::empty(),
             // FIXME(mark-i-m): use `cap` when ifs are allowed in const
             cap: [0, !0][(mem::size_of::<T>() == 0) as usize],
             a,
@@ -106,7 +104,6 @@ impl<T, A: Alloc> RawVec<T, A> {
 
             RawVec {
                 ptr: ptr.into(),
-                marker: PhantomData,
                 cap,
                 a,
             }
@@ -163,8 +160,7 @@ impl<T, A: Alloc> RawVec<T, A> {
     /// If the ptr and capacity come from a RawVec created via `a`, then this is guaranteed.
     pub unsafe fn from_raw_parts_in(ptr: *mut T, cap: usize, a: A) -> Self {
         RawVec {
-            ptr: NonNull::new_unchecked(ptr),
-            marker: PhantomData,
+            ptr: Unique::new_unchecked(ptr),
             cap,
             a,
         }
@@ -199,7 +195,7 @@ impl<T, A: Alloc> RawVec<T, A> {
 
 impl<T, A: Alloc> RawVec<T, A> {
     /// Gets a raw pointer to the start of the allocation. Note that this is
-    /// NonNull::dangling() if `cap = 0` or T is zero-sized. In the former case, you must
+    /// Unique::empty() if `cap = 0` or T is zero-sized. In the former case, you must
     /// be careful.
     pub fn ptr(&self) -> *mut T {
         self.ptr.as_ptr()

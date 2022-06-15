@@ -11,7 +11,7 @@ use core::convert::From;
 use core::fmt;
 use core::hash::{Hash, Hasher};
 use core::iter::{Iterator, FusedIterator};
-use core::marker::{PhantomData, Unpin};
+use core::marker::Unpin;
 use core::mem;
 use core::pin::Pin;
 use core::ops::{Deref, DerefMut};
@@ -21,12 +21,12 @@ use crate::alloc::{Alloc, Layout, handle_alloc_error};
 #[cfg(feature = "std")]
 use crate::alloc::Global;
 use crate::raw_vec::RawVec;
+use crate::Unique;
 
 /// A pointer type for heap allocation.
 global_alloc! {
     pub struct Box<T: ?Sized, A: Alloc> {
-        ptr: NonNull<T>,
-        marker: PhantomData<T>,
+        ptr: Unique<T>,
         pub(crate) a: A,
     }
 }
@@ -64,8 +64,7 @@ impl<T, A: Alloc> Box<T, A> {
             ptr::write(ptr.as_ptr() as *mut T, x);
         }
         Box {
-            ptr: ptr,
-            marker: PhantomData,
+            ptr: ptr.into(),
             a: a,
         }
     }
@@ -167,8 +166,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     #[inline]
     pub unsafe fn from_raw_in(raw: *mut T, a: A) -> Self {
         Box {
-            ptr: NonNull::new_unchecked(raw),
-            marker: PhantomData,
+            ptr: Unique::new_unchecked(raw),
             a: a,
         }
     }
@@ -238,6 +236,10 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// ```
     #[inline]
     pub fn into_raw_non_null(b: Box<T, A>) -> NonNull<T> {
+        Box::into_unique(b).into()
+    }
+
+    pub(crate) fn into_unique(b: Box<T, A>) -> Unique<T> {
         let ptr = b.ptr;
         mem::forget(b);
         ptr
@@ -328,7 +330,7 @@ impl<T: ?Sized, A: Alloc> Box<T, A> {
     /// This conversion does not allocate and happens in place.
     ///
     /// This is also available via [`From`].
-    fn into_pin(boxed: Box<T, A>) -> Pin<Box<T, A>> {
+    pub fn into_pin(boxed: Box<T, A>) -> Pin<Box<T, A>> {
         // It's not possible to move or replace the insides of a `Pin<Box<T>>`
         // when `T: !Unpin`,  so it's safe to pin it directly without any
         // additional requirements.
@@ -342,7 +344,7 @@ impl<T: ?Sized, A: Alloc> Drop for Box<T, A> {
             let layout = Layout::for_value(self.ptr.as_ref());
             ptr::drop_in_place(self.ptr.as_ptr());
             if layout.size() != 0 {
-                self.a.dealloc(self.ptr.cast(), layout);
+                self.a.dealloc(NonNull::from(self.ptr).cast(), layout);
             }
         }
     }

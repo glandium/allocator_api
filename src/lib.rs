@@ -92,3 +92,62 @@ pub mod alloc {
 pub use crate::alloc::*;
 pub use crate::boxed::*;
 pub use crate::raw_vec::*;
+
+use core::marker::PhantomData;
+use core::mem;
+use core::ptr::NonNull;
+
+pub(crate) struct Unique<T: ?Sized> {
+    pointer: NonNull<T>,
+    _marker: PhantomData<T>,
+}
+
+unsafe impl<T: Send + ?Sized> Send for Unique<T> {}
+unsafe impl<T: Sync + ?Sized> Sync for Unique<T> {}
+
+impl<T: Sized> Unique<T> {
+    pub const fn empty() -> Self {
+        unsafe {
+            Unique::new_unchecked(mem::align_of::<T>() as *mut T)
+        }
+    }
+}
+
+impl<T: ?Sized> Unique<T> {
+    pub const unsafe fn new_unchecked(ptr: *mut T) -> Self {
+        Unique { pointer: NonNull::new_unchecked(ptr), _marker: PhantomData }
+    }
+
+    pub fn as_ptr(self) -> *mut T {
+        self.pointer.as_ptr()
+    }
+
+    pub unsafe fn as_ref(&self) -> &T {
+        self.pointer.as_ref()
+    }
+
+    pub unsafe fn as_mut(&mut self) -> &mut T {
+        self.pointer.as_mut()
+    }
+}
+
+impl<T: ?Sized> Clone for Unique<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T: ?Sized> Copy for Unique<T> { }
+
+impl<'a, T: ?Sized> From<NonNull<T>> for Unique<T> {
+    fn from(p: NonNull<T>) -> Self {
+        Unique { pointer: p, _marker: PhantomData }
+    }
+}
+
+impl<T: ?Sized> From<Unique<T>> for NonNull<T> {
+    #[inline]
+    fn from(unique: Unique<T>) -> Self {
+        unsafe { NonNull::new_unchecked(unique.as_ptr()) }
+    }
+}
